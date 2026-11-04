@@ -24,11 +24,11 @@ local function mineRock(name, id)
     end
 
     local pickingData = settings.pickingData or {}
-    local levelBonus = math.max(0, math.min(99, tonumber(profile.maxLevelSpeedBonus) or 0))
+    local levelBonus = Kora.util.clamp(tonumber(profile.maxLevelSpeedBonus) or 0, 0, 99)
     local miningLevel = tonumber(profile.miningLevel) or 1
-    local levelProgress = math.max(0, math.min(1, (miningLevel - 1) / 98))
-    local pickaxeBonus = math.max(0, math.min(99, tonumber(profile.pickaxeSpeedBonus) or 0))
-    local totalSpeedBonus = math.min(95, levelBonus * levelProgress + pickaxeBonus)
+    local levelProgress = Kora.util.clamp((miningLevel - 1) / 98, 0, 1)
+    local pickaxeBonus = Kora.util.clamp(tonumber(profile.pickaxeSpeedBonus) or 0, 0, 99)
+    local totalSpeedBonus = Kora.util.clamp(levelBonus * levelProgress + pickaxeBonus, 0, 95)
     local duration = tonumber(pickingData.time or settings.pickTime) or 5000
     duration = math.max(500, math.floor(duration * (1 - totalSpeedBonus / 100)))
 

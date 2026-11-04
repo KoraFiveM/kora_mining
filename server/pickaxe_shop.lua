@@ -18,20 +18,8 @@ local function fail(message)
     return false, message
 end
 
-local function isAdmin(source)
-    return tonumber(source) ~= nil
-        and tonumber(source) > 0
-        and IsPlayerAceAllowed(source, 'command')
-end
-
-local function decode(raw)
-    if type(raw) ~= 'string' then return {} end
-
-    local ok, data = pcall(json.decode, raw)
-    if not ok or type(data) ~= 'table' then return {} end
-
-    return data
-end
+local isAdmin = MiningUtil.isAdmin
+local function decode(raw) return MiningUtil.decodeJson(raw, {}) end
 
 local function publishShop()
     GlobalState.koraMiningPickaxeShop = shopConfig
@@ -48,28 +36,15 @@ local function getMiningLevel(source)
 end
 
 local function getItemDefinition(itemName)
-    local ok, items = pcall(function()
-        return exports['qb-core']:GetShared('Items')
-    end)
-
-    if not ok or type(items) ~= 'table' then
-        ok, items = pcall(function()
-            return exports.kora_core:getShared('items')
-        end)
-    end
-
-    return ok and type(items) == 'table' and items[itemName] or nil
+    return MiningUtil.getSharedItems()[itemName]
 end
 
 local function isAtVendor(source)
-    for _, location in ipairs(shopConfig.locations) do
-        local coords = location.coords or location
-        if Kora.distance.player(source, vector3(coords.x, coords.y, coords.z), 5.0) then
-            return true
-        end
-    end
-
-    return false
+    local found = Kora.distance.playerNearAny(source, shopConfig.locations, {
+        radius = 5.0,
+        coordsOf = function(location) return location.coords or location end,
+    })
+    return found
 end
 
 local function getCatalog(source)
@@ -274,7 +249,7 @@ Kora.callback.register('kora_mining:pickaxeShop:creator:save', function(source, 
         local y = type(coords) == 'table' and tonumber(coords.y)
         local z = type(coords) == 'table' and tonumber(coords.z)
 
-        if not x or not y or not z or math.abs(x) > 10000 or math.abs(y) > 10000 or math.abs(z) > 10000 then
+        if not MiningUtil.isWorldCoord(x, y, z) then
             return fail('A pickaxe vendor location has invalid coordinates.')
         end
 

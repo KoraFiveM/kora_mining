@@ -11,17 +11,8 @@ local function isRockCategory(category)
     return false
 end
 
-local function isAdmin(src)
-    return tonumber(src) ~= nil and tonumber(src) > 0 and IsPlayerAceAllowed(src, 'command')
-end
-
-local function allItems()
-    local ok, items = pcall(function() return exports['qb-core']:GetShared('Items') end)
-    if not ok or type(items) ~= 'table' then
-        ok, items = pcall(function() return exports.kora_core:getShared('items') end)
-    end
-    return ok and type(items) == 'table' and items or {}
-end
+local isAdmin = MiningUtil.isAdmin
+local allItems = MiningUtil.getSharedItems
 
 local function itemExists(name)
     return type(name) == 'string' and name ~= '' and type(allItems()[name]) == 'table'
@@ -41,11 +32,7 @@ local function itemOptions()
     return options
 end
 
-local function decode(raw)
-    if type(raw) ~= 'string' then return {} end
-    local ok, value = pcall(json.decode, raw)
-    return ok and type(value) == 'table' and value or {}
-end
+local function decode(raw) return MiningUtil.decodeJson(raw, {}) end
 
 local function readRock(row)
     local data = decode(row.data)
@@ -165,18 +152,18 @@ local function cleanData(data)
     local level = tonumber(data.levelRequired)
     local xpPerMine = tonumber(data.xpPerMine) or 0
     local maxLevelSpeedBonus = tonumber(data.maxLevelSpeedBonus) or 0
-    if not maxGive or maxGive % 1 ~= 0 or maxGive < 1 or maxGive > 100 then return nil, 'Max give must be from 1 to 100.' end
-    if not respawnTime or respawnTime < 1 or respawnTime > 3600 then return nil, 'Respawn time must be from 1 to 3600 seconds.' end
-    if not pickTime or pickTime % 1 ~= 0 or pickTime < 500 or pickTime > 60000 then return nil, 'Mining time must be from 500 to 60000 ms.' end
-    if not level or level % 1 ~= 0 or level < 1 or level > 99 then return nil, 'Mining level must be from 1 to 99.' end
-    if xpPerMine % 1 ~= 0 or xpPerMine < 0 or xpPerMine > 10000 then return nil, 'Mining XP per mine must be from 0 to 10000.' end
-    if maxLevelSpeedBonus % 1 ~= 0 or maxLevelSpeedBonus < 0 or maxLevelSpeedBonus > 99 then return nil, 'Max Mining level speed bonus must be from 0% to 99%.' end
+    if not MiningUtil.inRange(maxGive, 1, 100, true) then return nil, 'Max give must be from 1 to 100.' end
+    if not MiningUtil.inRange(respawnTime, 1, 3600, false) then return nil, 'Respawn time must be from 1 to 3600 seconds.' end
+    if not MiningUtil.inRange(pickTime, 500, 60000, true) then return nil, 'Mining time must be from 500 to 60000 ms.' end
+    if not MiningUtil.inRange(level, 1, 99, true) then return nil, 'Mining level must be from 1 to 99.' end
+    if not MiningUtil.inRange(xpPerMine, 0, 10000, true) then return nil, 'Mining XP per mine must be from 0 to 10000.' end
+    if not MiningUtil.inRange(maxLevelSpeedBonus, 0, 99, true) then return nil, 'Max Mining level speed bonus must be from 0% to 99%.' end
     local pickaxes, pickaxeInput = {}, type(data.pickaxes) == 'table' and data.pickaxes or {}
     for _, pick in ipairs(PICKAXES) do
         local setting = pickaxeInput[pick.id]
         if type(setting) ~= 'table' then setting = {} end
         local bonus = tonumber(setting.speedBonus) or 0
-        if bonus % 1 ~= 0 or bonus < 0 or bonus > 99 then return nil, ('%s speed bonus must be from 0%% to 99%%.'):format(pick.name) end
+        if not MiningUtil.inRange(bonus, 0, 99, true) then return nil, ('%s speed bonus must be from 0%% to 99%%.'):format(pick.name) end
         pickaxes[pick.id] = { speedBonus = bonus, enabled = setting.enabled ~= false }
     end
     local locations = {}
@@ -184,7 +171,7 @@ local function cleanData(data)
         for _, spot in ipairs(data.locations) do
             local c = type(spot) == 'table' and spot.coords
             local x, y, z = c and tonumber(c.x), c and tonumber(c.y), c and tonumber(c.z)
-            if x and y and z and math.abs(x) <= 10000 and math.abs(y) <= 10000 and math.abs(z) <= 10000 then
+            if MiningUtil.isWorldCoord(x, y, z) then
                 locations[#locations + 1] = { coords = { x = x, y = y, z = z } }
             end
             if #locations >= 200 then break end

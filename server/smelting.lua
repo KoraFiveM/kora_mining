@@ -5,45 +5,14 @@ for _, category in ipairs(MiningConfig.smeltingCategories) do
     validRecipeCategories[category.value] = true
 end
 
-local function decodeJsonTable(raw, defaultValue)
-    if type(raw) ~= 'string' then
-        return defaultValue
-    end
-
-    local ok, value = pcall(json.decode, raw)
-    if not ok or type(value) ~= 'table' then
-        return defaultValue
-    end
-
-    return value
-end
-
-local function getSharedItems()
-    local ok, value = pcall(function()
-        return exports['qb-core']:GetShared('Items')
-    end)
-
-    if not ok or type(value) ~= 'table' then
-        ok, value = pcall(function()
-            return exports.kora_core:getShared('items')
-        end)
-    end
-
-    if not ok or type(value) ~= 'table' then
-        return {}
-    end
-
-    return value
-end
+local decodeJsonTable = MiningUtil.decodeJson
+local getSharedItems = MiningUtil.getSharedItems
 
 local function doesItemExist(itemName)
     return type(itemName) == 'string' and type(getSharedItems()[itemName]) == 'table'
 end
 
-local function hasMiningAdminPermission(source)
-    local playerId = tonumber(source)
-    return playerId ~= nil and playerId > 0 and IsPlayerAceAllowed(source, 'command')
-end
+local hasMiningAdminPermission = MiningUtil.isAdmin
 
 local function fail(message)
     return false, message
@@ -331,7 +300,7 @@ registerAdminCallback('kora_mining:smelting:creator:stationLocations',function(_
         if #locations>=100 then break end
         local c=type(loc)=='table' and loc.coords; local x,y,z=c and tonumber(c.x),c and tonumber(c.y),c and tonumber(c.z)
         local object=type(loc)=='table' and loc.object or nil
-        if x and y and z and math.abs(x)<=10000 and math.abs(y)<=10000 and math.abs(z)<=10000 then
+        if MiningUtil.isWorldCoord(x, y, z) then
             if object~=nil and (type(object)~='string' or not object:match('^[%w_%-%.]+$')) then return fail('Invalid object model.') end
             locations[#locations+1]={coords={x=x,y=y,z=z,w=tonumber(c.w) or 0},object=object}
         else return fail('Each location needs valid coordinates.') end

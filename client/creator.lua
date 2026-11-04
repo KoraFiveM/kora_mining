@@ -128,6 +128,11 @@ local function buildRockSettingsPage()
 end
 
 buildCreatorNavigation = function()
+    -- Built once per call so every "look up a smelt item's label/image by value"
+    -- below is O(1) instead of rescanning smeltItems per recipe/ingredient.
+    local itemsByValue = {}
+    for _, item in ipairs(smeltItems) do itemsByValue[item.value] = item end
+
     local blocks = {}
     for _, category in ipairs(ROCK_CATEGORIES) do
         local items = {}
@@ -155,13 +160,7 @@ buildCreatorNavigation = function()
     end
 
     for _, recipe in ipairs(smeltRecipes) do
-        local image
-        for _, item in ipairs(smeltItems) do
-            if item.value == recipe.output then
-                image = item.image
-                break
-            end
-        end
+        local image = itemsByValue[recipe.output] and itemsByValue[recipe.output].image
 
         local description = 'Choose result and ingredients to finish this recipe'
         if recipe.output then
@@ -340,7 +339,8 @@ buildCreatorNavigation = function()
         for _,recipe in ipairs(smeltRecipes) do
           if recipe.output and #(recipe.inputs or {})>0 then
             local output,image=recipe.output,nil
-            for _,item in ipairs(smeltItems) do if item.value==recipe.output then output=item.label; image=item.image; break end end
+            local item=itemsByValue[recipe.output]
+            if item then output,image=item.label,item.image end
             local row={id=recipe.id,label=recipe.label,description=('Makes %dx %s'):format(recipe.amount,output),image=image}
             if has[recipe.id] then
                 row.actions={{id='smelt:station:remove:'..recipe.id,label='Remove',icon='Trash2',variant='destructive'}}
@@ -383,9 +383,9 @@ buildCreatorNavigation = function()
         local blocks={{type='form',id='smelt-details',title='Recipe details',fields=details,action={id='smelt:details',label='Save details'}}}
         local output={}
         if recipe.output then
-            local label=recipe.output
-            local image
-            for _,item in ipairs(smeltItems) do if item.value==recipe.output then label=item.label; image=item.image; break end end
+            local label,image=recipe.output,nil
+            local item=itemsByValue[recipe.output]
+            if item then label,image=item.label,item.image end
             output[1]={id='output',label=label,description=recipe.output,image=image,metadata={{label='Amount made',value=('%dx'):format(recipe.amount or 1)}},
                 actions={{id='smelt:output:amount',label='Edit amount',icon='Pencil',variant='primary'}}}
         end
@@ -405,9 +405,9 @@ buildCreatorNavigation = function()
         end
         local ingredients={}
         for _,input in ipairs(recipe.inputs or {}) do
-            local label=input.item
-            for _,item in ipairs(smeltItems) do if item.value==input.item then label=item.label; break end end
-            local image; for _,item in ipairs(smeltItems) do if item.value==input.item then image=item.image; break end end
+            local label,image=input.item,nil
+            local item=itemsByValue[input.item]
+            if item then label,image=item.label,item.image end
             ingredients[#ingredients+1]={id=input.item,label=label,description=input.item,image=image,metadata={{label='Amount needed',value=('%dx'):format(input.amount)}},
                 actions={{id='smelt:ingredient:edit:'..input.item,label='Edit amount',icon='Pencil',variant='primary'},
                     {id='smelt:ingredient:remove:'..input.item,label='Remove',icon='Trash2',variant='destructive'}}}
