@@ -148,7 +148,7 @@ local function loadSmeltingData()
 end
 
 CreateThread(function()
-    local ok,err=Kora.sql.ready(); assert(ok,err)
+    if not KoraMining.schemaReady() then return end
     loadSmeltingData()
 end)
 

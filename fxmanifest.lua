@@ -22,7 +22,10 @@ shared_scripts {
 }
 
 server_scripts {
-    'server/**.lua',
+    'server/schema.lua',
+    'server/main.lua',
+    'server/pickaxe_shop.lua',
+    'server/smelting.lua',
 }
 client_scripts {
     'client/**.lua',

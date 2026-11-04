@@ -326,19 +326,7 @@ register('kora_mining:creator:delete', function(_, id)
 end)
 
 CreateThread(function()
-    local ready, err = Kora.sql.ready()
-    assert(ready, err)
-    -- The sapphire rock now yields the uncut item used by its cutting recipe.
-    local sapphire = Kora.sql.query('SELECT `id`, `data` FROM `kora_mining_rockspawns` WHERE `id`=? LIMIT 1', { 'sapphire' })
-    if sapphire and sapphire[1] then
-        local data = decode(sapphire[1].data)
-        if data.item == 'sapphire' then
-            data.item = 'uncut_sapphire'
-            data.progressLabel = 'Mining Uncut sapphire'
-            local updated, updateErr = Kora.sql.update('UPDATE `kora_mining_rockspawns` SET `data`=? WHERE `id`=?', { json.encode(data), 'sapphire' })
-            assert(updated, updateErr or 'Could not migrate sapphire rockspawn reward.')
-        end
-    end
+    if not KoraMining.schemaReady() then return end
     refreshRockspawns()
 end)
 

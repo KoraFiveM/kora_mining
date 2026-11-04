@@ -1,6 +1,8 @@
 # Mining item definitions and images
 
-This list covers every item referenced by `kora_mining/mining.sql` and the pickaxe catalog in `kora_mining/shared/config.lua`.
+This list covers every item referenced by the starter content in `kora_mining/server/schema.lua` and the pickaxe catalog in `kora_mining/shared/config.lua`.
+
+The mining tables and starter content are created automatically on first start; no SQL import is needed.
 
 - Item definitions included: **80**
 - Required item images included in `kora_mining/images`: **80**

@@ -176,8 +176,7 @@ local function loadShop()
 end
 
 CreateThread(function()
-    local ready, err = Kora.sql.ready()
-    assert(ready, err)
+    if not KoraMining.schemaReady() then return end
     loadShop()
 end)
 
