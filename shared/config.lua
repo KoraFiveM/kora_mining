@@ -37,6 +37,22 @@ MiningConfig = {
         { value = 'gemstones', label = 'Gemstones' },
     },
 
+    -- Map blip for the mine entrance (suggestion thread 1567879565496553522).
+    -- Client-only, one blip per player. sprite/color/scale/shortRange fall back
+    -- to kora_lib's Config.blips defaults when removed. category is a kora_lib
+    -- blip category name (nil = Other); description fills the pause-map card.
+    blip = {
+        enabled = true,
+        name = 'Mine Shaft',
+        coords = vec3(-596.74, 2090.99, 131.41),
+        sprite = 527,
+        color = 81,
+        scale = 0.7,
+        shortRange = true,
+        category = nil,
+        description = 'Mine rocks here. Pickaxes are sold by the vendor at the quarry entrance.',
+    },
+
     pickaxes = {
         { id = 'pick1', name = 'Bronze Pickaxe', item = 'bronze_pickaxe', level = 1, price = 250 },
         { id = 'pick2', name = 'Iron Pickaxe', item = 'iron_pickaxe', level = 20, price = 1000 },

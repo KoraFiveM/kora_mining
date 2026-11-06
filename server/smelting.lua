@@ -474,7 +474,10 @@ Kora.callback.register('kora_mining:smelting:menu',function(src,stationId,key)
 end)
 
 Kora.callback.register('kora_mining:smelting:begin', function(source, stationId, key, recipeId)
-    if activeSmeltingTasks[source] then
+    -- A task past its expiry can never finish, so it no longer blocks a new
+    -- one (a client that lost its cancel event is not locked out until relog).
+    local current = activeSmeltingTasks[source]
+    if current and GetGameTimer() <= current.expires then
         return fail('You are already smelting.')
     end
 
@@ -511,7 +514,10 @@ Kora.callback.register('kora_mining:smelting:finish', function(source)
 
     local elapsedTime = GetGameTimer() - task.started
     local timeExpired = GetGameTimer() > task.expires
-    local timeWasTooShort = elapsedTime < recipe.duration - 1000
+    -- Up to 1s of timer slack, but never more than 10% of the recipe, so a
+    -- short recipe cannot be finished (almost) instantly.
+    local slack = math.min(1000, recipe.duration * 0.1)
+    local timeWasTooShort = elapsedTime < recipe.duration - slack
     local canStillUseRecipe = canPlayerUseRecipe(source, station, task.recipe)
     if timeExpired or timeWasTooShort or not canStillUseRecipe then
         return fail('Smelting could not be completed.')

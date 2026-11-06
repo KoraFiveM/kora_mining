@@ -155,12 +155,19 @@ local function openSmeltingMenu(stationId, locationIndex)
             local completed = Kora.progressbar.start({
                 label = started.label,
                 duration = started.duration,
+                -- Ingredients are only taken in smelting:finish, so cancelling
+                -- (X or Escape) costs nothing; the server drops the task below.
+                canCancel = true,
                 disable = { move = true, combat = true, vehicle = true },
                 anim = { dict = 'mp_arresting', clip = 'a_uncuff', flag = 17 },
             })
 
             if not completed then
                 TriggerServerEvent('kora_mining:smelting:cancel')
+                isSmelting = false
+                Kora.notify.send({ title = 'Smelting', message = 'Smelting cancelled. Your materials were not used.', type = 'info' })
+                -- The player chose to stop: do not reopen the menu at them.
+                break
             else
                 local success, finishError = Kora.callback.trigger('kora_mining:smelting:finish')
                 if not success then notify(finishError) end
