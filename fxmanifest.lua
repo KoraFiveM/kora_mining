@@ -5,7 +5,7 @@ lua54 'yes'
 name 'kora_mining'
 author 'Kora'
 description 'Mining rock spawn creator and configuration'
-version '0.1.4'
+version '0.1.5'
 
 dependency 'kora_lib'
 dependency 'kora_core'
