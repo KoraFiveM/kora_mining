@@ -242,6 +242,19 @@ local function findPickaxe(src, rock, miningLevel, requestedPickaxe)
     end
 end
 
+local activeMines = {}
+
+-- Mirrors client/rockspawns.lua's duration formula so the server can enforce
+-- a minimum mining time instead of trusting whatever delay the client waited.
+local function miningDuration(rock, miningLevel, pickaxeSpeedBonus)
+    local pickTime = tonumber(rock.data.pickTime) or 5000
+    local maxLevelSpeedBonus = Kora.util.clamp(tonumber(rock.data.maxLevelSpeedBonus) or 0, 0, 99)
+    local levelProgress = Kora.util.clamp((miningLevel - 1) / 98, 0, 1)
+    local pickaxeBonus = Kora.util.clamp(tonumber(pickaxeSpeedBonus) or 0, 0, 99)
+    local totalSpeedBonus = Kora.util.clamp(maxLevelSpeedBonus * levelProgress + pickaxeBonus, 0, 95)
+    return math.max(500, math.floor(pickTime * (1 - totalSpeedBonus / 100)))
+end
+
 local function mineProfile(src, rockId, spotId)
     if type(rockId) ~= 'string' or type(spotId) ~= 'number' or spotId % 1 ~= 0 then return end
     local rock = rockspawns[rockId]
@@ -264,16 +277,34 @@ local function mineProfile(src, rockId, spotId)
 end
 
 Kora.callback.register('kora_mining:mineProfile', function(src, rockId, spotId)
-    return mineProfile(src, rockId, spotId)
+    local profile, err = mineProfile(src, rockId, spotId)
+    if not profile then return profile, err end
+    -- A request to begin mining starts the server's own clock for this spot;
+    -- the completion event below is only honoured if enough of it has passed,
+    -- so a modified client can't skip the mining-time wait.
+    activeMines[src] = {
+        rockId = rockId, spotId = spotId, pickaxeId = profile.pickaxeId,
+        started = GetGameTimer(),
+        duration = miningDuration(profile.rock, profile.miningLevel, profile.pickaxeSpeedBonus),
+    }
+    return profile, err
 end)
 
 RegisterNetEvent('kora_mining:server:mine', function(rockId, spotId, pickaxeId)
     local src = source
+    local mine = activeMines[src]
+    activeMines[src] = nil
+
     local profile, err = mineProfile(src, rockId, spotId)
     if not profile or profile.pickaxeId ~= pickaxeId then
         if err then Kora.notify.send(src, { title = 'Mining', message = err, type = 'error' }) end
         return
     end
+    if not mine or mine.rockId ~= rockId or mine.spotId ~= spotId or mine.pickaxeId ~= pickaxeId then return end
+    -- Up to 1s of slack, but never more than 10% of the mining time, so a very
+    -- short pick time still cannot be finished (almost) instantly.
+    local slack = math.min(1000, mine.duration * 0.1)
+    if GetGameTimer() - mine.started < mine.duration - slack then return end
     local rock, spot = profile.rock, profile.spot
 
     spot.taken = true
@@ -321,4 +352,8 @@ RegisterCommand('miningCreator', function(src)
     if not isAdmin(src) then Kora.notify.send(src, { title = 'Mining Creator', message = 'Admin permission required.', type = 'error' }); return end
     TriggerClientEvent('kora_mining:creator:open', src)
 end, false)
+
+AddEventHandler('playerDropped', function()
+    activeMines[source] = nil
+end)
 

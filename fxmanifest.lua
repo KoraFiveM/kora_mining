@@ -17,11 +17,11 @@ dependency 'props'
 shared_scripts {
     '@kora_lib/init.lua',
     '@kora_core/init.lua',
-    '@kora_sql/init.lua',
     'shared/config.lua',
 }
 
 server_scripts {
+    '@kora_sql/init.lua',
     'server/schema.lua',
     'server/util.lua',
     'server/main.lua',
