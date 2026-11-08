@@ -5,7 +5,7 @@ lua54 'yes'
 name 'kora_mining'
 author 'Kora'
 description 'Mining rock spawn creator and configuration'
-version '0.1.5'
+version '0.1.6'
 
 dependency 'kora_lib'
 dependency 'kora_core'
@@ -26,6 +26,7 @@ server_scripts {
     'server/util.lua',
     'server/main.lua',
     'server/pickaxe_shop.lua',
+    'server/blips.lua',
     'server/smelting.lua',
 }
 client_scripts {

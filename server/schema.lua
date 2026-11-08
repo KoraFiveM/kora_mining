@@ -15,6 +15,22 @@ KoraMiningSchema = {
         },
     },
     {
+        name = 'kora_mining_blips',
+        collate = 'utf8mb4_general_ci',
+        columns = {
+            { name = 'id', type = 'varchar(32)' },
+            { name = 'data', type = 'longtext' },
+        },
+        primary = { 'id' },
+        seed = {
+            once = true,
+            rows = {
+                { id = 'mine_shaft', data = [==[{"name":"Mine Shaft","x":-596.74,"y":2090.99,"z":131.41,"sprite":527,"color":81,"scale":0.7,"shortRange":false,"description":"Mine rocks here. Pickaxes are sold by the vendor at the quarry entrance."}]==] },
+                { id = 'pickaxe_vendor', data = [==[{"name":"Pickaxe Vendor","x":2569.38,"y":2720.07,"z":41.94,"sprite":59,"color":5,"scale":0.7,"shortRange":true,"description":""}]==] },
+            },
+        },
+    },
+    {
         name = 'kora_mining_rockspawns',
         collate = 'utf8mb4_general_ci',
         columns = {
