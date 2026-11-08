@@ -5,6 +5,7 @@ local selectedSmeltStation, stationRecipeQuery, pendingStationLocation = nil, ''
 local smeltItemSearch={query=nil,results={}}
 local pendingPlace = false
 local pickaxeShop, pendingPickaxeVendor = nil, false
+local miningBlips, selectedBlipId, pendingBlip = {}, nil, nil
 local buildCreatorNavigation
 local ROCK_MODELS = MiningConfig.rockModels
 local ROCK_CATEGORIES = MiningConfig.rockCategories
@@ -125,6 +126,77 @@ local function buildRockSettingsPage()
         description = 'Rock prop, reward, mining time, Mining level, and the speed bonus at max Mining level.',
         blocks = blocks,
     } }
+end
+
+local function blipValues(value, blip)
+    value = value or {}
+    return {
+        name = value.name, description = value.description or '',
+        sprite = tonumber(value.sprite), color = tonumber(value.color), scale = tonumber(value.scale),
+        shortRange = value.shortRange ~= 'no' and value.shortRange ~= false,
+        x = blip and blip.x, y = blip and blip.y, z = blip and blip.z,
+    }
+end
+
+local function findBlip(id)
+    for _, blip in ipairs(miningBlips) do if blip.id == id then return blip end end
+end
+
+local function buildBlipsPage()
+    local rows = {}
+    for _, blip in ipairs(miningBlips) do
+        rows[#rows + 1] = {
+            id = blip.id,
+            label = blip.name,
+            icon = 'MapPin',
+            description = ('Sprite %d · Colour %d · %0.2f, %0.2f, %0.2f'):format(blip.sprite, blip.color, blip.x, blip.y, blip.z),
+            actions = {
+                { id = 'blips:edit:' .. blip.id, label = 'Edit', icon = 'Pencil', variant = 'outline' },
+                { id = 'blips:delete:' .. blip.id, label = 'Delete', icon = 'Trash2', variant = 'destructive' },
+            },
+        }
+    end
+    local d = findBlip(selectedBlipId) or {}
+    local editing = d.id ~= nil
+    local blocks = {
+        {
+            type = 'list',
+            id = 'blip-list',
+            title = ('Map blips (%d)'):format(#rows),
+            items = rows,
+            empty = 'No blips yet.',
+        },
+        {
+            type = 'form',
+            id = 'blip-details',
+            title = editing and ('Edit blip: ' .. d.name) or 'New blip',
+            fields = {
+                { id = 'name', label = 'Name', type = 'text', required = true, default = d.name or '' },
+                { id = 'sprite', label = 'Sprite', type = 'number', min = 0, max = 900, default = d.sprite or 1, required = true },
+                { id = 'color', label = 'Colour', type = 'number', min = 0, max = 85, default = d.color or 0, required = true },
+                { id = 'scale', label = 'Size', type = 'number', min = 0.1, max = 3.0, default = d.scale or 0.7, required = true },
+                { id = 'shortRange', label = 'Short range', type = 'select', required = true,
+                    default = (d.shortRange == false) and 'no' or 'yes',
+                    options = { { value = 'yes', label = 'Yes (only shows near the player)' }, { value = 'no', label = 'No (shows on the whole map)' } } },
+                { id = 'description', label = 'Description', type = 'text', default = d.description or '' },
+            },
+            action = editing and { id = 'blips:save', label = 'Save blip' }
+                or { id = 'blips:place', label = 'Aim and place location' },
+        },
+    }
+    local actions = { { id = 'blips:new', label = 'New blip', icon = 'Plus', variant = 'outline' } }
+    if editing then actions[#actions + 1] = { id = 'blips:replace', label = 'Re-aim location', icon = 'MapPin', variant = 'outline' } end
+    blocks[#blocks + 1] = { type = 'actions', actions = actions }
+    return {
+        id = 'blips',
+        label = 'Blips',
+        icon = 'MapPin',
+        content = {
+            title = 'Blips',
+            description = 'Map blips shown to every player. Fill the form, then aim at the ground and press E to place (Backspace cancels).',
+            blocks = blocks,
+        },
+    }
 end
 
 buildCreatorNavigation = function()
@@ -324,6 +396,7 @@ buildCreatorNavigation = function()
             },
         },
     }
+    pages[#pages + 1] = buildBlipsPage()
     local station
     for _,entry in ipairs(smeltStations) do if entry.id==selectedSmeltStation then station=entry; break end end
     if station then
@@ -436,6 +509,9 @@ local function openMiningCreator()
     local vendor, vendorErr = Kora.callback.trigger('kora_mining:pickaxeShop:creator:get')
       if not vendor then Kora.notify.send({title='Mining Creator',message=vendorErr or 'Could not load pickaxe vendor.',type='error'}); return end
       pickaxeShop = vendor
+      local blipList, blipErr = Kora.callback.trigger('kora_mining:blips:creator:get')
+      if not blipList then Kora.notify.send({title='Mining Creator',message=blipErr or 'Could not load blips.',type='error'}); return end
+      miningBlips, selectedBlipId, pendingBlip = blipList, nil, nil
       local smelting, smeltErr = Kora.callback.trigger('kora_mining:smelting:creator:get')
     if not smelting then
         Kora.notify.send({ title='Mining Creator', message=smeltErr or 'Could not load smelting recipes.', type='error' })
@@ -578,6 +654,36 @@ local function openMiningCreator()
                 smeltStations=result.stations or {}; return refresh(notify('Station saved.'))
             elseif action == 'smelt:station:search' then
                 stationRecipeQuery=tostring(value.query or ''):match('^%s*(.-)%s*$'); return refresh()
+            elseif action == 'blips:new' then
+                selectedBlipId = nil
+                return refresh()
+            elseif action:match('^blips:edit:') then
+                local id = action:sub(#'blips:edit:' + 1)
+                if not findBlip(id) then return fail('Blip not found.') end
+                selectedBlipId = id
+                return refresh()
+            elseif action:match('^blips:delete:') then
+                local id = action:sub(#'blips:delete:' + 1)
+                local list, delErr = Kora.callback.trigger('kora_mining:blips:creator:delete', id)
+                if not list then return fail(delErr) end
+                miningBlips = list
+                if selectedBlipId == id then selectedBlipId = nil end
+                return refresh(notify('Blip deleted.'))
+            elseif action == 'blips:save' then
+                local blip = findBlip(selectedBlipId)
+                if not blip then return fail('Choose Edit on a blip, or use Aim and place location for a new one.') end
+                local list, saveErr = Kora.callback.trigger('kora_mining:blips:creator:save', blip.id, blipValues(value, blip))
+                if not list then return fail(saveErr) end
+                miningBlips = list
+                return refresh(notify('Blip saved.'))
+            elseif action == 'blips:place' then
+                pendingBlip = { id = nil, values = blipValues(value) }
+                return {close=true}
+            elseif action == 'blips:replace' then
+                local blip = findBlip(selectedBlipId)
+                if not blip then return fail('Blip not found.') end
+                pendingBlip = { id = blip.id, values = blipValues(blip, blip) }
+                return {close=true}
             elseif action == 'pickaxe:vendor:place' then
                 pendingPickaxeVendor = true
                 return {close=true}
@@ -699,7 +805,7 @@ local function openMiningCreator()
         end })
     while true do
         Kora.nui.openApp(APP)
-        local reopenCreator = pendingStationLocation ~= nil or pendingPickaxeVendor
+        local reopenCreator = pendingStationLocation ~= nil or pendingPickaxeVendor or pendingBlip ~= nil
         if pendingStationLocation then
             local placement = pendingStationLocation
             pendingStationLocation = nil
@@ -734,6 +840,26 @@ local function openMiningCreator()
                     Kora.notify.send({title='Mining Creator',message=saveErr or 'Could not save vendor location.',type='error'})
                 else
                     pickaxeShop = saved
+                end
+            elseif not ok then
+                Kora.notify.send({title='Mining Creator',message=tostring(aimed),type='error'})
+            end
+            Kora.nui.updateApp(APP, {navigation=buildCreatorNavigation()})
+        end
+        if pendingBlip then
+            local placement = pendingBlip
+            pendingBlip = nil
+            local ok, aimed = pcall(Kora.raycast.getCoords, {})
+            local coords = ok and aimed and aimed.coords
+            if coords then
+                local values = placement.values
+                values.x, values.y, values.z = coords.x, coords.y, coords.z
+                local list, saveErr = Kora.callback.trigger('kora_mining:blips:creator:save', placement.id, values)
+                if not list then
+                    Kora.notify.send({title='Mining Creator',message=saveErr or 'Could not save blip.',type='error'})
+                else
+                    miningBlips = list
+                    if not placement.id then selectedBlipId = nil end
                 end
             elseif not ok then
                 Kora.notify.send({title='Mining Creator',message=tostring(aimed),type='error'})

@@ -3,6 +3,7 @@ dofile('server/schema.lua')
 
 local EXPECTED_ROWS = {
     kora_mining_pickaxe_shop = 1,
+    kora_mining_blips = 2,
     kora_mining_rockspawns = 20,
     kora_mining_smelting_recipes = 55,
     kora_mining_smelting_stations = 2,
@@ -15,7 +16,7 @@ local function readFile(path)
     return s
 end
 
-assert(#KoraMiningSchema == 4, 'expected 4 tables')
+assert(#KoraMiningSchema == 5, 'expected 5 tables')
 
 local byName = {}
 for _, spec in ipairs(KoraMiningSchema) do
@@ -39,7 +40,7 @@ end
 assert(sapphire, 'sapphire rockspawn missing')
 assert(sapphire.data:find('"item":"uncut_sapphire"', 1, true), 'sapphire must yield uncut_sapphire')
 
-for _, file in ipairs({ 'server/main.lua', 'server/pickaxe_shop.lua', 'server/smelting.lua', 'server/schema.lua' }) do
+for _, file in ipairs({ 'server/main.lua', 'server/pickaxe_shop.lua', 'server/blips.lua', 'server/smelting.lua', 'server/schema.lua' }) do
     local src = readFile(file):lower()
     for _, banned in ipairs({ 'migrate', 'alter table', 'create table' }) do
         assert(not src:find(banned, 1, true), file .. ' contains ' .. banned)
