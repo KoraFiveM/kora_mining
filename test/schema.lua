@@ -1,4 +1,4 @@
-Kora = { sql = { NULL = '\0qbsql:null\0' } }
+Kora = { sql = { NULL = '\0kora_sql:null\0' } }
 dofile('server/schema.lua')
 
 local EXPECTED_ROWS = {
