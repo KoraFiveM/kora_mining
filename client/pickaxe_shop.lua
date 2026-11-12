@@ -5,26 +5,26 @@ local catalog = {}
 
 local function notify(message, tone)
     Kora.notify.send({
-        title = 'Pickaxe Shop',
-        message = message or 'Could not complete that purchase.',
+        title = Kora.lang('Ui.pickaxe_shop'),
+        message = message or Kora.lang('Error.could_not_complete_purchase'),
         type = tone or 'error',
     })
 end
 
 local function formatMoney(amount)
-    return ('$%d'):format(tonumber(amount) or 0)
+    return Kora.lang('Ui.d', tonumber(amount) or 0)
 end
 
 local function buildNavigation(items)
     local rows = {}
 
     for _, pickaxe in ipairs(items or {}) do
-        local pickaxeLabel = pickaxe.label or pickaxe.name or pickaxe.item or 'Pickaxe'
+        local pickaxeLabel = pickaxe.label or pickaxe.name or pickaxe.item or Kora.lang('Error.pickaxe')
         local requirement
         if pickaxe.unlocked then
-            requirement = ('Mining level %d · %s'):format(pickaxe.level, formatMoney(pickaxe.price))
+            requirement = Kora.lang('Ui.mining_level_d_s', pickaxe.level, formatMoney(pickaxe.price))
         else
-            requirement = ('Requires Mining level %d · %s'):format(pickaxe.level, formatMoney(pickaxe.price))
+            requirement = Kora.lang('Ui.requires_mining_level_d_s', pickaxe.level, formatMoney(pickaxe.price))
         end
 
         rows[#rows + 1] = {
@@ -35,12 +35,12 @@ local function buildNavigation(items)
             actions = {
                 {
                     id = 'pickaxe:buy:' .. pickaxe.item,
-                    label = pickaxe.owned and 'Owned' or 'Buy',
+                    label = pickaxe.owned and Kora.lang('Error.owned') or Kora.lang('Error.buy'),
                     icon = pickaxe.owned and 'Check' or 'ShoppingCart',
                     variant = 'primary',
                     disabled = pickaxe.owned or not pickaxe.unlocked,
                     confirm = not pickaxe.owned and pickaxe.unlocked
-                        and ('Buy %s for %s cash?'):format(pickaxeLabel, formatMoney(pickaxe.price))
+                        and Kora.lang('Ui.buy_s_for_s_cash', pickaxeLabel, formatMoney(pickaxe.price))
                         or nil,
                 },
             },
@@ -50,20 +50,20 @@ local function buildNavigation(items)
     return {
         {
             id = 'shop',
-            label = 'Pickaxes',
+            label = Kora.lang('Ui.pickaxes'),
             icon = 'Pickaxe',
             content = {
-                title = 'Mining Pickaxes',
-                description = 'Purchase a pickaxe when you meet its Mining level requirement.',
+                title = Kora.lang('Ui.mining_pickaxes'),
+                description = Kora.lang('Ui.purchase_a_pickaxe_when_you'),
                 blocks = {
                     {
                         type = 'list',
                         id = 'pickaxe-list',
                         layout = 'cards',
                         columns = 2,
-                        title = 'Pickaxes',
+                        title = Kora.lang('Ui.pickaxes'),
                         items = rows,
-                        empty = 'No pickaxes are configured.',
+                        empty = Kora.lang('Ui.no_pickaxes_are_configured'),
                     },
                 },
             },
@@ -82,8 +82,8 @@ local function openShop()
 
     Kora.nui.registerApp({
         id = APP_ID,
-        title = 'Mining Pickaxes',
-        description = 'Buy mining tools',
+        title = Kora.lang('Ui.mining_pickaxes'),
+        description = Kora.lang('Ui.buy_mining_tools'),
         icon = 'Pickaxe',
         layout = 'compact',
         placement = 'right',
@@ -99,7 +99,7 @@ local function openShop()
                 return {
                     notice = {
                         tone = 'destructive',
-                        message = purchaseError or 'Purchase failed.',
+                        message = purchaseError or Kora.lang('Error.purchase_failed'),
                     },
                 }
             end
@@ -107,7 +107,7 @@ local function openShop()
             catalog = updated.items or catalog
             return {
                 update = { navigation = buildNavigation(catalog) },
-                notice = { tone = 'success', message = 'Pickaxe purchased.' },
+                notice = { tone = 'success', message = Kora.lang('Notify.pickaxe_purchased') },
             }
         end,
     })
@@ -149,7 +149,7 @@ local function spawnVendors(shop)
             if entity then
                 local targetId = exports.kora_target:addEntity(entity, {
                     {
-                        label = 'Buy Pickaxes',
+                        label = Kora.lang('Ui.buy_pickaxes'),
                         icon = 'Pickaxe',
                         onSelect = openShop,
                     },

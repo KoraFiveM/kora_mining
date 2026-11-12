@@ -40,7 +40,7 @@ local function createMissing()
             if ok and created then
                 handles[blip.id] = created
             else
-                lastErr = ('%s: %s'):format(blip.name, tostring(ok and err or created))
+                lastErr = Kora.lang('Ui.s_s', blip.name, tostring(ok and err or created))
             end
         end
     end
@@ -69,7 +69,7 @@ local function syncBlips(list, fresh)
                 if attempt < RETRY_ATTEMPTS then Wait(RETRY_DELAY_MS) end
             end
             if err and not resync then
-                print(('^3[kora_mining] map blip was not created: %s^7'):format(err))
+                print(Kora.lang('Error.map_blip_was_not_created', err))
             end
             fresh = resync
         until not resync

@@ -49,11 +49,11 @@ end
 
 local function getCatalog(source)
     if not shopReady then
-        return fail('Pickaxe shop is still loading.')
+        return fail(Kora.lang('Error.pickaxe_shop_is_still_loading'))
     end
 
     if not isAtVendor(source) then
-        return fail('You are too far from the pickaxe shop.')
+        return fail(Kora.lang('Error.you_are_too_far_from_pickaxe_shop'))
     end
 
     local miningLevel = getMiningLevel(source)
@@ -161,7 +161,7 @@ end)
 
 Kora.callback.register('kora_mining:pickaxeShop:buy', function(source, itemName)
     if pendingPurchases[source] then
-        return fail('Your purchase is already processing.')
+        return fail(Kora.lang('Error.your_purchase_is_already_processing'))
     end
 
     pendingPurchases[source] = true
@@ -172,7 +172,7 @@ Kora.callback.register('kora_mining:pickaxeShop:buy', function(source, itemName)
     end
 
     if not shopReady or not isAtVendor(source) then
-        return finishPurchase(false, 'You are too far from the pickaxe shop.')
+        return finishPurchase(false, Kora.lang('Error.you_are_too_far_from_pickaxe_shop'))
     end
 
     local pickaxe
@@ -184,25 +184,25 @@ Kora.callback.register('kora_mining:pickaxeShop:buy', function(source, itemName)
     end
 
     if not pickaxe then
-        return finishPurchase(false, 'That pickaxe is not for sale.')
+        return finishPurchase(false, Kora.lang('Error.pickaxe_not_for_sale'))
     end
 
     if getMiningLevel(source) < pickaxe.level then
-        return finishPurchase(false, ('Mining level %d is required.'):format(pickaxe.level))
+        return finishPurchase(false, Kora.lang('Error.mining_level_required', pickaxe.level))
     end
 
     local owned = exports.kora_inventory:GetItemCount(source, pickaxe.item) or 0
     if owned > 0 then
-        return finishPurchase(false, 'You already own this pickaxe.')
+        return finishPurchase(false, Kora.lang('Error.already_own_pickaxe'))
     end
 
     if not getItemDefinition(pickaxe.item) then
-        return finishPurchase(false, 'This pickaxe item is not configured.')
+        return finishPurchase(false, Kora.lang('Error.pickaxe_item_not_configured'))
     end
 
     local price = tonumber(shopConfig.prices[pickaxe.item]) or pickaxe.price
     if not exports.kora_core:removeMoney(source, 'cash', price, 'mining-pickaxe-purchase') then
-        return finishPurchase(false, 'You do not have enough cash.')
+        return finishPurchase(false, Kora.lang('Error.not_enough_cash'))
     end
 
     local added, addError = exports.kora_inventory:addItem(source, pickaxe.item, 1)
@@ -219,27 +219,27 @@ Kora.callback.register('kora_mining:pickaxeShop:buy', function(source, itemName)
                 :format(source, tostring(refundError)))
         end
 
-        return finishPurchase(false, addError or 'Your inventory could not fit the pickaxe; your cash was refunded.')
+        return finishPurchase(false, addError or Kora.lang('Error.inventory_full_purchase_refunded'))
     end
 
     return finishPurchase(getCatalog(source))
 end)
 
 Kora.callback.register('kora_mining:pickaxeShop:creator:get', function(source)
-    if not isAdmin(source) then return fail('Admin permission required.') end
-    if not shopReady then return fail('Pickaxe shop is still loading.') end
+    if not isAdmin(source) then return fail(Kora.lang('Error.admin_permission_required')) end
+    if not shopReady then return fail(Kora.lang('Error.pickaxe_shop_is_still_loading')) end
 
     return shopConfig
 end)
 
 Kora.callback.register('kora_mining:pickaxeShop:creator:save', function(source, model, locations)
-    if not isAdmin(source) then return fail('Admin permission required.') end
-    if not shopReady then return fail('Pickaxe shop is still loading.') end
+    if not isAdmin(source) then return fail(Kora.lang('Error.admin_permission_required')) end
+    if not shopReady then return fail(Kora.lang('Error.pickaxe_shop_is_still_loading')) end
     if type(model) ~= 'string' or #model > 64 or not model:match('^[%w_%-]+$') then
-        return fail('Enter a valid ped model.')
+        return fail(Kora.lang('Error.enter_a_valid_ped_model'))
     end
     if type(locations) ~= 'table' or #locations > 100 then
-        return fail('Provide up to 100 pickaxe vendor locations.')
+        return fail(Kora.lang('Error.provide_up_to_100_pickaxe'))
     end
 
     local cleanLocations = {}
@@ -250,7 +250,7 @@ Kora.callback.register('kora_mining:pickaxeShop:creator:save', function(source, 
         local z = type(coords) == 'table' and tonumber(coords.z)
 
         if not MiningUtil.isWorldCoord(x, y, z) then
-            return fail('A pickaxe vendor location has invalid coordinates.')
+            return fail(Kora.lang('Error.a_pickaxe_vendor_location_has'))
         end
 
         cleanLocations[#cleanLocations + 1] = {
@@ -267,15 +267,15 @@ Kora.callback.register('kora_mining:pickaxeShop:creator:save', function(source, 
     if not saved then
         shopConfig.locations = previousLocations
         shopConfig.model = previousModel
-        return fail(err or 'Could not save pickaxe vendor.')
+        return fail(err or Kora.lang('Error.could_not_save_pickaxe_vendor'))
     end
 
     return shopConfig
 end)
 
 Kora.callback.register('kora_mining:pickaxeShop:creator:price', function(source, itemName, rawPrice)
-    if not isAdmin(source) then return fail('Admin permission required.') end
-    if not shopReady then return fail('Pickaxe shop is still loading.') end
+    if not isAdmin(source) then return fail(Kora.lang('Error.admin_permission_required')) end
+    if not shopReady then return fail(Kora.lang('Error.pickaxe_shop_is_still_loading')) end
 
     local pickaxe
     for _, entry in ipairs(PICKAXES_FOR_SALE) do
@@ -286,9 +286,9 @@ Kora.callback.register('kora_mining:pickaxeShop:creator:price', function(source,
     end
 
     local price = tonumber(rawPrice)
-    if not pickaxe then return fail('Unknown pickaxe.') end
+    if not pickaxe then return fail(Kora.lang('Error.unknown_pickaxe')) end
     if not price or price % 1 ~= 0 or price < 0 or price > 100000000 then
-        return fail('Price must be a whole number from 0 to 100,000,000.')
+        return fail(Kora.lang('Error.price_must_be_a_whole'))
     end
 
     local previousPrice = shopConfig.prices[itemName]
@@ -297,7 +297,7 @@ Kora.callback.register('kora_mining:pickaxeShop:creator:price', function(source,
     local saved, err = saveShop()
     if not saved then
         shopConfig.prices[itemName] = previousPrice
-        return fail(err or 'Could not save pickaxe price.')
+        return fail(err or Kora.lang('Error.could_not_save_pickaxe_price'))
     end
 
     return shopConfig

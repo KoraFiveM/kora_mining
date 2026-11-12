@@ -125,7 +125,7 @@ end
 
 local function register(name, fn)
     Kora.callback.register(name, function(src, ...)
-        if not isAdmin(src) then return fail('Admin permission required.') end
+        if not isAdmin(src) then return fail(Kora.lang('Error.admin_permission_required')) end
         return fn(src, ...)
     end)
 end
@@ -138,32 +138,32 @@ local function cleanId(value)
 end
 
 local function cleanData(data)
-    if type(data) ~= 'table' then return nil, 'Invalid rock settings.' end
+    if type(data) ~= 'table' then return nil, Kora.lang('Error.invalid_rock_settings') end
     local model = type(data.model) == 'string' and data.model:match('^%s*(.-)%s*$')
     local item = type(data.item) == 'string' and data.item:match('^%s*(.-)%s*$')
     local category = data.category
     if not isRockCategory(category) then
-        return nil, 'Choose Resources, Gemstones, or Crystals.'
+        return nil, Kora.lang('Error.choose_resources_gemstones_or_crystals')
     end
-    if not model or model == '' or #model > 64 or not model:match('^[%w_%-%.]+$') then return nil, 'Enter a valid rock prop model.' end
-    if not itemExists(item) then return nil, 'The reward item does not exist.' end
+    if not model or model == '' or #model > 64 or not model:match('^[%w_%-%.]+$') then return nil, Kora.lang('Error.enter_a_valid_rock_prop') end
+    if not itemExists(item) then return nil, Kora.lang('Error.the_reward_item_does_not') end
     local maxGive, respawnTime = tonumber(data.maxGive), tonumber(data.respawnTime)
     local pickTime = tonumber(data.pickTime)
     local level = tonumber(data.levelRequired)
     local xpPerMine = tonumber(data.xpPerMine) or 0
     local maxLevelSpeedBonus = tonumber(data.maxLevelSpeedBonus) or 0
-    if not MiningUtil.inRange(maxGive, 1, 100, true) then return nil, 'Max give must be from 1 to 100.' end
-    if not MiningUtil.inRange(respawnTime, 1, 3600, false) then return nil, 'Respawn time must be from 1 to 3600 seconds.' end
-    if not MiningUtil.inRange(pickTime, 500, 60000, true) then return nil, 'Mining time must be from 500 to 60000 ms.' end
-    if not MiningUtil.inRange(level, 1, 99, true) then return nil, 'Mining level must be from 1 to 99.' end
-    if not MiningUtil.inRange(xpPerMine, 0, 10000, true) then return nil, 'Mining XP per mine must be from 0 to 10000.' end
-    if not MiningUtil.inRange(maxLevelSpeedBonus, 0, 99, true) then return nil, 'Max Mining level speed bonus must be from 0% to 99%.' end
+    if not MiningUtil.inRange(maxGive, 1, 100, true) then return nil, Kora.lang('Error.max_give_must_be_from') end
+    if not MiningUtil.inRange(respawnTime, 1, 3600, false) then return nil, Kora.lang('Error.respawn_time_must_be_from') end
+    if not MiningUtil.inRange(pickTime, 500, 60000, true) then return nil, Kora.lang('Error.mining_time_must_be_from') end
+    if not MiningUtil.inRange(level, 1, 99, true) then return nil, Kora.lang('Error.mining_level_must_be_from') end
+    if not MiningUtil.inRange(xpPerMine, 0, 10000, true) then return nil, Kora.lang('Error.mining_xp_per_mine_must') end
+    if not MiningUtil.inRange(maxLevelSpeedBonus, 0, 99, true) then return nil, Kora.lang('Error.max_mining_level_speed_bonus') end
     local pickaxes, pickaxeInput = {}, type(data.pickaxes) == 'table' and data.pickaxes or {}
     for _, pick in ipairs(PICKAXES) do
         local setting = pickaxeInput[pick.id]
         if type(setting) ~= 'table' then setting = {} end
         local bonus = tonumber(setting.speedBonus) or 0
-        if not MiningUtil.inRange(bonus, 0, 99, true) then return nil, ('%s speed bonus must be from 0%% to 99%%.'):format(pick.name) end
+        if not MiningUtil.inRange(bonus, 0, 99, true) then return nil, Kora.lang('Error.pickaxe_speed_bonus', pick.name) end
         pickaxes[pick.id] = { speedBonus = bonus, enabled = setting.enabled ~= false }
     end
     local locations = {}
@@ -197,25 +197,25 @@ register('kora_mining:creator:pickaxes:save', function(_, rockId, pickId, input)
     rockId = cleanId(rockId)
     local row = known and rockId and Kora.sql.query(
         'SELECT `data`, `locations` FROM `kora_mining_rockspawns` WHERE `id` = ? LIMIT 1', { rockId }) or nil
-    if not (row and row[1] and type(input) == 'table') then return fail('Unknown rockspawn or pickaxe.') end
+    if not (row and row[1] and type(input) == 'table') then return fail(Kora.lang('Error.unknown_rockspawn_or_pickaxe')) end
     local data = decode(row[1].data)
     if type(data.pickaxes) ~= 'table' or #data.pickaxes > 0 then data.pickaxes = defaultPickaxeSettings() end
     local bonus = tonumber(input.speedBonus)
-    if not bonus or bonus % 1 ~= 0 or bonus < 0 or bonus > 99 then return fail('Speed bonus must be from 0% to 99%.') end
+    if not bonus or bonus % 1 ~= 0 or bonus < 0 or bonus > 99 then return fail(Kora.lang('Error.speed_bonus_must_be_from')) end
     data.pickaxes[pickId] = { speedBonus = bonus, enabled = input.enabled ~= false }
     local ok, err = Kora.sql.update('UPDATE `kora_mining_rockspawns` SET `data` = ? WHERE `id` = ?', { json.encode(data), rockId })
-    if not ok then return fail(err or 'Could not save pickaxe for this rock.') end
+    if not ok then return fail(err or Kora.lang('Error.could_not_save_pickaxe')) end
     reloadRockspawn(rockId)
     return readRock({ id = rockId, data = json.encode(data), locations = row[1].locations })
 end)
 register('kora_mining:creator:create', function(_, id)
     id = cleanId(id)
-    if not id then return fail('Use a name starting with a letter, with letters, numbers and underscores.') end
+    if not id then return fail(Kora.lang('Error.use_a_name_starting_with')) end
     local empty = { category = 'resources', model = '', item = '', maxGive = 2, respawnTime = 60, pickTime = 5000, levelRequired = 1,
         xpPerMine = 0, maxLevelSpeedBonus = 0, pickaxes = defaultPickaxeSettings(), icon = 'fa-solid fa-hammer', targetLabel = 'Mine rock',
         progressLabel = 'Mining', disabled = false }
     local ok, err = Kora.sql.update('INSERT INTO `kora_mining_rockspawns` (`id`, `data`, `locations`) VALUES (?, ?, ?)', { id, json.encode(empty), '[]' })
-    if not ok then return fail(err or 'Could not create rockspawn.') end
+    if not ok then return fail(err or Kora.lang('Error.could_not_create_rockspawn')) end
     reloadRockspawn(id)
     return { id = id, data = empty, locations = {} }
 end)
@@ -259,15 +259,15 @@ local function mineProfile(src, rockId, spotId)
     if type(rockId) ~= 'string' or type(spotId) ~= 'number' or spotId % 1 ~= 0 then return end
     local rock = rockspawns[rockId]
     local spot = rock and rock.locations[spotId]
-    if not spot or spot.taken then return false, 'This rock is unavailable.' end
-    if not isNear(src, spot.coords, 3.0) then return false, 'Move closer to the rock.' end
+    if not spot or spot.taken then return false, Kora.lang('Error.this_rock_is_unavailable') end
+    if not isNear(src, spot.coords, 3.0) then return false, Kora.lang('Error.move_closer_to_the_rock') end
     local miningLevel = getMiningLevel(src)
     local requiredLevel = tonumber(rock.data.levelRequired) or 1
     if not miningLevel or miningLevel < requiredLevel then
-        return false, ('You need Mining level %d to mine this rock.'):format(requiredLevel)
+        return false, Kora.lang('Error.mining_level_needed_to_mine', requiredLevel)
     end
     local pick, setting = findPickaxe(src, rock, miningLevel)
-    if not pick then return false, 'You need an enabled pickaxe that you can use to mine this rock.' end
+    if not pick then return false, Kora.lang('Error.you_need_an_enabled_pickaxe') end
     return {
         rock = rock, spot = spot, miningLevel = miningLevel,
         pickaxeId = pick.id, pickaxeLevel = pick.level,
@@ -324,21 +324,21 @@ RegisterNetEvent('kora_mining:server:mine', function(rockId, spotId, pickaxeId)
 end)
 register('kora_mining:creator:save', function(_, id, raw)
     id = cleanId(id)
-    if not id then return fail('Unknown rockspawn.') end
+    if not id then return fail(Kora.lang('Error.unknown_rockspawn')) end
     local data, err = cleanData(raw)
     if not data then return fail(err) end
     local ok, saveErr = Kora.sql.update('UPDATE `kora_mining_rockspawns` SET `data` = ?, `locations` = ? WHERE `id` = ?',
         { json.encode(data), json.encode(data.locations), id })
-    if not ok then return fail(saveErr or 'Could not save rockspawn.') end
+    if not ok then return fail(saveErr or Kora.lang('Error.could_not_save_rockspawn')) end
     reloadRockspawn(id)
     data.locations = nil
     return { id = id, data = data, locations = raw.locations or {} }
 end)
 register('kora_mining:creator:delete', function(_, id)
     id = cleanId(id)
-    if not id then return fail('Unknown rockspawn.') end
+    if not id then return fail(Kora.lang('Error.unknown_rockspawn')) end
     local ok, err = Kora.sql.update('DELETE FROM `kora_mining_rockspawns` WHERE `id` = ?', { id })
-    if not ok then return fail(err or 'Could not delete rockspawn.') end
+    if not ok then return fail(err or Kora.lang('Error.could_not_delete_rockspawn')) end
     reloadRockspawn(id)
     return true
 end)
