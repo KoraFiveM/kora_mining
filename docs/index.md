@@ -18,16 +18,18 @@ Current version: see `version` in `fxmanifest.lua`.
 - **Mining Creator** - an admin NUI app for rocks, spots, vendor, blips, recipes and stations. See [Mining Creator](./creator.md).
 - **Seed data** - on first start the resource creates its tables and seeds 20 rock types, 55 recipes, 2 stations, a pickaxe vendor and 2 blips. See [Database](./database.md).
 
-## Pages
+## Documentation map
 
-- [Installation](./installation.md) - dependencies, ensure order, first start
-- [Configuration](./configuration.md) - `shared/config.lua` and what is database-driven instead
-- [Mining](./mining.md) - rock data, mining flow, speed formula, anti-cheat checks
+- [Installation](./installation.md) - dependencies, manifest, tables, items, ensure order, first start
+- [How to use](./how-to-use.md) - mining, creator, pickaxe shop, smelting and blip flows step by step
+- [Commands and permissions](./commands.md) - `/miningCreator` and the `command` ACE requirement
+- [API reference](./api/index.md) - module index for the shared configuration
+- [Configuration reference](./api/configuration.md) - `MiningConfig` options, default pickaxes and hard-coded values
+- [Mining](./mining.md) - rock data, mining flow, speed formula, seeded rocks
 - [Pickaxes and shop](./pickaxe-shop.md) - pickaxe tiers, vendor, purchase flow
 - [Smelting](./smelting.md) - recipes, stations, smelting flow
 - [Map blips](./blips.md) - blip data and behaviour
 - [Mining Creator](./creator.md) - the admin tool and `/miningCreator`
-- [Commands and permissions](./commands.md) - command and ACE requirements
 - [Events and callbacks](./events.md) - net events, callbacks, state bags
 - [Items](./items.md) - items the resource references and bundled images
 - [Database](./database.md) - tables, columns and seed data

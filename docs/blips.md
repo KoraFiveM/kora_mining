@@ -1,6 +1,6 @@
 ---
 title: Map blips
-sidebar_position: 7
+sidebar_position: 9
 ---
 
 # Map blips
