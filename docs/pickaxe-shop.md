@@ -1,13 +1,13 @@
 ---
 title: Pickaxes and shop
-sidebar_position: 5
+sidebar_position: 7
 ---
 
 # Pickaxes and shop
 
 ## Pickaxes
 
-Five tiers are defined in `MiningConfig.pickaxes` (see [Configuration](./configuration.md)). A player can use a pickaxe on a rock when all of these hold:
+Five tiers are defined in `MiningConfig.pickaxes` (see [Configuration](./api/configuration.md)). A player can use a pickaxe on a rock when all of these hold:
 
 - the player owns the item (`GetItemCount` greater than 0);
 - the player's Mining level is at least the pickaxe `level`;

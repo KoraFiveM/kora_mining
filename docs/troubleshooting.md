@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting
-sidebar_position: 13
+sidebar_position: 14
 ---
 
 # Troubleshooting
@@ -31,6 +31,6 @@ Every reward, input and output item must exist in the shared items. See [Items](
 
 - The reward from mining is given with `addItem` without checking the result. If the inventory has no room, the rock is still consumed and XP is still awarded.
 - Creator edits reset all spots to available.
-- `MiningConfig.blip` is unused (see [Configuration](./configuration.md)).
+- `MiningConfig.blip` is unused (see [Configuration](./api/configuration.md)).
 - The default seed includes a station labelled `test`.
 - Existing rows are never changed by a restart, so changing seed data in `server/schema.lua` does not affect an already initialised database.

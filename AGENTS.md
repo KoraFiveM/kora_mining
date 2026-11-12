@@ -4,7 +4,7 @@
 
 ## Documentation
 
-User-facing documentation lives in `docs/` (Markdown, published via the Kora Docusaurus site, kora_docs_next). Read `docs/index.md` first for an overview of features, configuration, commands, exports, events and database usage.
+User-facing documentation lives in `docs/` (Markdown, published via the Kora Docusaurus site, kora_docs_next). Read `docs/index.md` first (it links every page). Layout: `index.md` (hub and documentation map), `installation.md`, `how-to-use.md` (step-by-step flows), `commands.md`, `api/` (`index.md` and `configuration.md` for `MiningConfig`), and topic pages (`mining.md`, `pickaxe-shop.md`, `smelting.md`, `blips.md`, `creator.md`, `events.md`, `items.md`, `database.md`, `troubleshooting.md`). Update the page that matches the topic you change.
 
 When you add, change, or remove a feature, config option, command, export, event, item, permission, or database table/column, update the matching page in `docs/` in the same change. Keep docs accurate to the code; do not document behaviour that does not exist.
 
