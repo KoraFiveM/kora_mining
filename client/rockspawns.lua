@@ -18,7 +18,7 @@ local function mineRock(name, id)
     Busy = true
     local profile, err = Kora.callback.trigger('kora_mining:mineProfile', name, id)
     if not profile then
-        Kora.notify.send({ title = 'Mining', message = err or 'You cannot mine this rock right now.', type = 'error' })
+        Kora.notify.send({ title = Kora.lang('Ui.mining'), message = err or Kora.lang('Error.cannot_mine_rock'), type = 'error' })
         Busy = false
         return
     end
@@ -33,7 +33,7 @@ local function mineRock(name, id)
     duration = math.max(500, math.floor(duration * (1 - totalSpeedBonus / 100)))
 
     local ok, completed = pcall(Kora.progressbar.start, {
-        label = settings.progressLabel ~= '' and settings.progressLabel or 'Mining',
+        label = settings.progressLabel ~= '' and settings.progressLabel or Kora.lang('Ui.mining'),
         duration = duration,
         useWhileDead = false,
         canCancel = true,
@@ -43,7 +43,7 @@ local function mineRock(name, id)
     if ok and completed then
         TriggerServerEvent('kora_mining:server:mine', name, id, profile.pickaxeId)
     elseif not ok then
-        print(('[kora_mining] mining progress failed: %s'):format(tostring(completed)))
+        print(Kora.lang('Ui.kora_mining_mining_progress_failed', tostring(completed)))
     end
     Busy = false
 end
@@ -55,7 +55,7 @@ local function spawnRock(name, id, spot)
     exports.kora_target:addEntity(object, {
         {
             icon = settings.icon or 'fa-solid fa-hammer',
-            label = settings.targetLabel or 'Mine rock',
+            label = settings.targetLabel or Kora.lang('Error.mine_rock'),
             onSelect = function() mineRock(name, id) end,
             canInteract = function() return not Busy end,
         }
@@ -106,7 +106,7 @@ local function initType(name)
     local settings = Kora.state.awaitGlobal(name .. 'Data', 30000, 100)
     local spots = Kora.state.awaitGlobal(name, 30000, 100)
     if not settings or not spots then
-        print(('[kora_mining] timed out waiting for GlobalState.%s'):format(name))
+        print(Kora.lang('Ui.kora_mining_timed_out_waiting', name))
         return
     end
     Settings[name], Spots[name] = settings, spots

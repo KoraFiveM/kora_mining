@@ -51,7 +51,7 @@ local function readStationRow(row)
     local savedData = decodeJsonTable(row.data, {})
     local stationData = {
         label = type(savedData.label) == 'string' and savedData.label or row.id,
-        targetLabel = type(savedData.targetLabel) == 'string' and savedData.targetLabel or 'Smelt',
+        targetLabel = type(savedData.targetLabel) == 'string' and savedData.targetLabel or Kora.lang('Error.smelt'),
         targetIcon = type(savedData.targetIcon) == 'string' and savedData.targetIcon or 'fa-solid fa-fire',
         recipes = {},
         categories = {},
@@ -124,10 +124,10 @@ end)
 local function registerAdminCallback(name,handler)
     Kora.callback.register(name, function(source, ...)
         if not hasMiningAdminPermission(source) then
-            return fail('Admin permission required.')
+            return fail(Kora.lang('Error.admin_permission_required'))
         end
         if not ready then
-            return fail('Smelting is still loading.')
+            return fail(Kora.lang('Error.smelting_is_still_loading'))
         end
 
         return handler(source, ...)
@@ -188,53 +188,53 @@ local function saveRecipe(recipe)
 end
 registerAdminCallback('kora_mining:smelting:creator:recipeCreate',function(_,label)
     label=type(label)=='string' and label:match('^%s*(.-)%s*$')
-    if not label or label=='' or #label>48 then return fail('Enter a recipe name (up to 48 characters).') end
+    if not label or label=='' or #label>48 then return fail(Kora.lang('Error.enter_a_recipe_name_up')) end
     local base=label:lower():gsub('[^%w]+','_'):gsub('^_+',''):gsub('_+$',''):sub(1,24); if base=='' then base='recipe' end
     local id,n=base,1; while smeltingRecipes[id] do n=n+1; id=base..'_'..n end
     local recipe={id=id,label=label,category='bars',inputs={},amount=1,level=1,xp=0,duration=10000}
-    local ok,err=saveRecipe(recipe); if not ok then return fail(err or 'Could not create recipe.') end
+    local ok,err=saveRecipe(recipe); if not ok then return fail(err or Kora.lang('Error.could_not_create_recipe')) end
     publish(); local result=buildCreatorPayload(); result.id=id; return result
 end)
 registerAdminCallback('kora_mining:smelting:creator:recipeDetails',function(_,id,input)
-    local recipe=smeltingRecipes[id]; if not recipe or type(input)~='table' then return fail('Unknown recipe.') end
+    local recipe=smeltingRecipes[id]; if not recipe or type(input)~='table' then return fail(Kora.lang('Error.unknown_recipe')) end
     local label=type(input.label)=='string' and input.label:match('^%s*(.-)%s*$')
     local level,xp,duration=tonumber(input.level),tonumber(input.xp),tonumber(input.duration)
     local category=validRecipeCategories[input.category] and input.category or nil
-    if not label or label=='' or #label>48 then return fail('Enter a recipe name (up to 48 characters).') end
-    if not level or level%1~=0 or level<1 or level>99 then return fail('Smelting level must be 1 to 99.') end
-    if not xp or xp%1~=0 or xp<0 or xp>10000 then return fail('XP must be 0 to 10000.') end
-    if not duration or duration%1~=0 or duration<500 or duration>300000 then return fail('Smelting time must be 500 to 300000 ms.') end
-    if not category then return fail('Choose a recipe category.') end
+    if not label or label=='' or #label>48 then return fail(Kora.lang('Error.enter_a_recipe_name_up')) end
+    if not level or level%1~=0 or level<1 or level>99 then return fail(Kora.lang('Error.smelting_level_must_be_1')) end
+    if not xp or xp%1~=0 or xp<0 or xp>10000 then return fail(Kora.lang('Error.xp_must_be_0_to')) end
+    if not duration or duration%1~=0 or duration<500 or duration>300000 then return fail(Kora.lang('Error.smelting_time_must_be_500')) end
+    if not category then return fail(Kora.lang('Error.choose_a_recipe_category')) end
     recipe.label,recipe.category,recipe.level,recipe.xp,recipe.duration=label,category,level,xp,duration
-    local ok,err=saveRecipe(recipe); if not ok then return fail(err or 'Could not save recipe.') end
+    local ok,err=saveRecipe(recipe); if not ok then return fail(err or Kora.lang('Error.could_not_save_recipe')) end
     return buildCreatorPayload()
 end)
 registerAdminCallback('kora_mining:smelting:creator:recipeOutput',function(_,id,item,amount)
     local recipe=smeltingRecipes[id]; amount=tonumber(amount)
-    if not recipe or not doesItemExist(item) then return fail('Choose an existing output item.') end
-    if not amount or amount%1~=0 or amount<1 or amount>1000 then return fail('Output amount must be 1 to 1000.') end
+    if not recipe or not doesItemExist(item) then return fail(Kora.lang('Error.choose_an_existing_output_item')) end
+    if not amount or amount%1~=0 or amount<1 or amount>1000 then return fail(Kora.lang('Error.output_amount_must_be_1')) end
     recipe.output,recipe.amount=item,amount
-    local ok,err=saveRecipe(recipe); if not ok then return fail(err or 'Could not save result item.') end
+    local ok,err=saveRecipe(recipe); if not ok then return fail(err or Kora.lang('Error.could_not_save_result')) end
     return buildCreatorPayload()
 end)
 registerAdminCallback('kora_mining:smelting:creator:recipeInputs',function(_,id,list)
-    local recipe=smeltingRecipes[id]; if not recipe or type(list)~='table' or #list>20 then return fail('Invalid recipe items.') end
+    local recipe=smeltingRecipes[id]; if not recipe or type(list)~='table' or #list>20 then return fail(Kora.lang('Error.invalid_recipe_items')) end
     local ingredients,seen={},{}
     for _,entry in ipairs(list) do
         local item,count=entry.item,tonumber(entry.amount)
-        if not doesItemExist(item) then return fail('A required item does not exist.') end
-        if seen[item] then return fail('Each required item can only be listed once.') end
-        if not count or count%1~=0 or count<1 or count>1000 then return fail('Required item amounts must be 1 to 1000.') end
+        if not doesItemExist(item) then return fail(Kora.lang('Error.a_required_item_does_not')) end
+        if seen[item] then return fail(Kora.lang('Error.each_required_item_can_only')) end
+        if not count or count%1~=0 or count<1 or count>1000 then return fail(Kora.lang('Error.required_item_amounts_must_be')) end
         seen[item]=true; ingredients[#ingredients+1]={item=item,amount=count}
     end
     recipe.inputs=ingredients
-    local ok,err=saveRecipe(recipe); if not ok then return fail(err or 'Could not save required items.') end
+    local ok,err=saveRecipe(recipe); if not ok then return fail(err or Kora.lang('Error.could_not_save_required_items')) end
     return buildCreatorPayload()
 end)
 registerAdminCallback('kora_mining:smelting:creator:recipeDelete',function(_,id)
-    if not isValidRecordId(id) or not smeltingRecipes[id] then return fail('Unknown recipe.') end
+    if not isValidRecordId(id) or not smeltingRecipes[id] then return fail(Kora.lang('Error.unknown_recipe')) end
     local ok,err=Kora.sql.update('DELETE FROM `kora_mining_smelting_recipes` WHERE `id`=?',{id})
-    if not ok then return fail(err or 'Could not delete recipe.') end
+    if not ok then return fail(err or Kora.lang('Error.could_not_delete_recipe')) end
     smeltingRecipes[id]=nil
     for stationId,station in pairs(smeltingStations) do
         local kept={}; for _,recipeId in ipairs(station.data.recipes) do if recipeId~=id then kept[#kept+1]=recipeId end end
@@ -252,67 +252,67 @@ local function saveStation(station)
 end
 registerAdminCallback('kora_mining:smelting:creator:stationCreate',function(_,label)
     label=type(label)=='string' and label:match('^%s*(.-)%s*$')
-    if not label or label=='' or #label>48 then return fail('Enter a station name (up to 48 characters).') end
+    if not label or label=='' or #label>48 then return fail(Kora.lang('Error.enter_a_station_name_up')) end
     local base=label:lower():gsub('[^%w]+','_'):gsub('^_+',''):gsub('_+$',''):sub(1,24); if base=='' then base='station' end
     local id,n=base,1; while smeltingStations[id] do n=n+1; id=base..'_'..n end
     local station={id=id,data={label=label,targetLabel='Smelt',targetIcon='fa-solid fa-fire',recipes={},categories={}},locations={}}
-    local ok,err=saveStation(station); if not ok then return fail(err or 'Could not create station.') end
+    local ok,err=saveStation(station); if not ok then return fail(err or Kora.lang('Error.could_not_create_station')) end
     local result=buildCreatorPayload(); result.id=id; return result
 end)
 registerAdminCallback('kora_mining:smelting:creator:stationDetails',function(_,id,input)
-    local station=smeltingStations[id]; if not station or type(input)~='table' then return fail('Unknown station.') end
+    local station=smeltingStations[id]; if not station or type(input)~='table' then return fail(Kora.lang('Error.unknown_station')) end
     local label=type(input.label)=='string' and input.label:match('^%s*(.-)%s*$')
-    if not label or label=='' or #label>48 then return fail('Enter a station name (up to 48 characters).') end
-    station.data.label=label; station.data.targetLabel=type(input.targetLabel)=='string' and input.targetLabel:sub(1,48) or 'Smelt'
+    if not label or label=='' or #label>48 then return fail(Kora.lang('Error.enter_a_station_name_up')) end
+    station.data.label=label; station.data.targetLabel=type(input.targetLabel)=='string' and input.targetLabel:sub(1,48) or Kora.lang('Error.smelt')
     station.data.targetIcon=type(input.targetIcon)=='string' and input.targetIcon:sub(1,64) or 'fa-solid fa-fire'
-    local ok,err=saveStation(station); if not ok then return fail(err or 'Could not save station.') end
+    local ok,err=saveStation(station); if not ok then return fail(err or Kora.lang('Error.could_not_save_station')) end
     return buildCreatorPayload()
 end)
 registerAdminCallback('kora_mining:smelting:creator:stationRecipes',function(_,id,list)
-    local station=smeltingStations[id]; if not station or type(list)~='table' then return fail('Unknown station or invalid recipe list.') end
+    local station=smeltingStations[id]; if not station or type(list)~='table' then return fail(Kora.lang('Error.unknown_station_or_invalid_recipe')) end
     local kept,seen={},{}
     for _,recipeId in ipairs(list) do
         local recipe=smeltingRecipes[recipeId]
-        if not recipe or not recipe.output or type(recipe.inputs)~='table' or #recipe.inputs<1 then return fail('Finish setting the result and required items before adding a recipe to a station.') end
+        if not recipe or not recipe.output or type(recipe.inputs)~='table' or #recipe.inputs<1 then return fail(Kora.lang('Error.finish_setting_the_result_and')) end
         if not seen[recipeId] then seen[recipeId]=true; kept[#kept+1]=recipeId end
     end
-    if #kept>100 then return fail('A station can have at most 100 recipes.') end
+    if #kept>100 then return fail(Kora.lang('Error.a_station_can_have_at')) end
     station.data.recipes=kept
-    local ok,err=saveStation(station); if not ok then return fail(err or 'Could not save station recipes.') end
+    local ok,err=saveStation(station); if not ok then return fail(err or Kora.lang('Error.could_not_save_station_recipes')) end
     return buildCreatorPayload()
 end)
 registerAdminCallback('kora_mining:smelting:creator:stationCategories',function(_,id,list)
     local station=smeltingStations[id]
-    if not station or type(list)~='table' then return fail('Unknown station or invalid category list.') end
+    if not station or type(list)~='table' then return fail(Kora.lang('Error.unknown_station_or_invalid_category')) end
     local categories,seen={},{}
     for _,category in ipairs(list) do
-        if not validRecipeCategories[category] then return fail('Choose valid recipe categories.') end
+        if not validRecipeCategories[category] then return fail(Kora.lang('Error.choose_valid_recipe_categories')) end
         if not seen[category] then seen[category]=true; categories[#categories+1]=category end
     end
     station.data.categories=categories
-    local ok,err=saveStation(station); if not ok then return fail(err or 'Could not save station categories.') end
+    local ok,err=saveStation(station); if not ok then return fail(err or Kora.lang('Error.could_not_save_station_categories')) end
     return buildCreatorPayload()
 end)
 registerAdminCallback('kora_mining:smelting:creator:stationLocations',function(_,id,list)
-    local station=smeltingStations[id]; if not station or type(list)~='table' then return fail('Unknown station or invalid locations.') end
+    local station=smeltingStations[id]; if not station or type(list)~='table' then return fail(Kora.lang('Error.unknown_station_or_invalid_locations')) end
     local locations={}
     for _,loc in ipairs(list) do
         if #locations>=100 then break end
         local c=type(loc)=='table' and loc.coords; local x,y,z=c and tonumber(c.x),c and tonumber(c.y),c and tonumber(c.z)
         local object=type(loc)=='table' and loc.object or nil
         if MiningUtil.isWorldCoord(x, y, z) then
-            if object~=nil and (type(object)~='string' or not object:match('^[%w_%-%.]+$')) then return fail('Invalid object model.') end
+            if object~=nil and (type(object)~='string' or not object:match('^[%w_%-%.]+$')) then return fail(Kora.lang('Error.invalid_object_model')) end
             locations[#locations+1]={coords={x=x,y=y,z=z,w=tonumber(c.w) or 0},object=object}
-        else return fail('Each location needs valid coordinates.') end
+        else return fail(Kora.lang('Error.each_location_needs_valid_coordinates')) end
     end
     station.locations=locations
-    local ok,err=saveStation(station); if not ok then return fail(err or 'Could not save station locations.') end
+    local ok,err=saveStation(station); if not ok then return fail(err or Kora.lang('Error.could_not_save_station_locations')) end
     return buildCreatorPayload()
 end)
 registerAdminCallback('kora_mining:smelting:creator:stationDelete',function(_,id)
-    if not smeltingStations[id] then return fail('Unknown station.') end
+    if not smeltingStations[id] then return fail(Kora.lang('Error.unknown_station')) end
     local ok,err=Kora.sql.update('DELETE FROM `kora_mining_smelting_stations` WHERE `id`=?',{id})
-    if not ok then return fail(err or 'Could not delete station.') end
+    if not ok then return fail(err or Kora.lang('Error.could_not_delete_station')) end
     smeltingStations[id]=nil; publish(id); return buildCreatorPayload()
 end)
 
@@ -393,12 +393,12 @@ local function canPlayerUseRecipe(source, station, recipeId)
 end
 Kora.callback.register('kora_mining:smelting:menu',function(src,stationId,key)
     if not ready then
-        return fail('Smelting is still loading.')
+        return fail(Kora.lang('Error.smelting_is_still_loading'))
     end
 
     local station = findNearbyStation(src, stationId, key)
     if not station then
-        return fail('You are too far from this station.')
+        return fail(Kora.lang('Error.you_are_too_far_from_2'))
     end
 
     local playerLevel = getPlayerSmeltingLevel(src)
@@ -478,13 +478,13 @@ Kora.callback.register('kora_mining:smelting:begin', function(source, stationId,
     -- one (a client that lost its cancel event is not locked out until relog).
     local current = activeSmeltingTasks[source]
     if current and GetGameTimer() <= current.expires then
-        return fail('You are already smelting.')
+        return fail(Kora.lang('Error.you_are_already_smelting'))
     end
 
     local station = findNearbyStation(source, stationId, key)
     local recipe = smeltingRecipes[recipeId]
     if not station or not canPlayerUseRecipe(source, station, recipeId) then
-        return fail('You do not meet the level or item requirements.')
+        return fail(Kora.lang('Error.you_do_not_meet_the'))
     end
 
     local startedAt = GetGameTimer()
@@ -509,7 +509,7 @@ Kora.callback.register('kora_mining:smelting:finish', function(source)
     local recipe = task and smeltingRecipes[task.recipe]
     local station = task and findNearbyStation(source, task.station, task.key)
     if not task or not recipe or not station then
-        return fail('Smelting could not be completed.')
+        return fail(Kora.lang('Error.smelting_could_not_be_completed'))
     end
 
     local elapsedTime = GetGameTimer() - task.started
@@ -520,7 +520,7 @@ Kora.callback.register('kora_mining:smelting:finish', function(source)
     local timeWasTooShort = elapsedTime < recipe.duration - slack
     local canStillUseRecipe = canPlayerUseRecipe(source, station, task.recipe)
     if timeExpired or timeWasTooShort or not canStillUseRecipe then
-        return fail('Smelting could not be completed.')
+        return fail(Kora.lang('Error.smelting_could_not_be_completed'))
     end
 
     local removedIngredients = {}
@@ -531,7 +531,7 @@ Kora.callback.register('kora_mining:smelting:finish', function(source)
                 exports.kora_inventory:addItem(source, returnedIngredient.item, returnedIngredient.amount)
             end
 
-            return fail('Could not remove required materials.')
+            return fail(Kora.lang('Error.could_not_remove_required_materials'))
         end
 
         removedIngredients[#removedIngredients + 1] = ingredient
@@ -543,7 +543,7 @@ Kora.callback.register('kora_mining:smelting:finish', function(source)
             exports.kora_inventory:addItem(source, ingredient.item, ingredient.amount)
         end
 
-        return fail('You do not have room for the result.')
+        return fail(Kora.lang('Error.you_do_not_have_room'))
     end
 
     if recipe.xp > 0 then

@@ -1,11 +1,13 @@
 fx_version 'cerulean'
 game 'gta5'
 lua54 'yes'
+files {
+    'locales/*.lua',
+}
 
 name 'kora_mining'
 author 'Kora'
 description 'Mining rock spawn creator and configuration'
-version '0.2.1'
 
 dependency 'kora_lib'
 dependency 'kora_core'

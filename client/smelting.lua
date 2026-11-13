@@ -9,8 +9,8 @@ local CATEGORIES = MiningConfig.smeltingCategories
 
 local function notify(message)
     Kora.notify.send({
-        title = 'Smelting',
-        message = message or 'Smelting failed.',
+        title = Kora.lang('Creator.smelting'),
+        message = message or Kora.lang('Error.smelting_failed'),
         type = 'error',
     })
 end
@@ -69,25 +69,25 @@ local function buildRecipeCards(recipes)
         local canSmelt = not recipe.locked and recipe.has
 
         for _, ingredient in ipairs(recipe.inputs) do
-            ingredientLabels[#ingredientLabels + 1] = ('%dx %s'):format(ingredient.amount, ingredient.label)
+            ingredientLabels[#ingredientLabels + 1] = Kora.lang('Ui.dx_s', ingredient.amount, ingredient.label)
             if not ingredient.has then canSmelt = false end
         end
 
         local card = {
             id = recipe.id,
             label = recipe.label,
-            description = ('Makes %dx %s'):format(recipe.outputAmount, recipe.output),
+            description = Kora.lang('Creator.makes_dx_s', recipe.outputAmount, recipe.output),
             image = recipe.outputImage,
             metadata = {
-                { label = 'Needs', value = table.concat(ingredientLabels, ', ') },
+                { label = Kora.lang('Ui.needs'), value = table.concat(ingredientLabels, ', ') },
                 {
-                    label = 'Smelting',
-                    value = ('Level %d · %d XP'):format(recipe.level, recipe.xp),
+                    label = Kora.lang('Creator.smelting'),
+                    value = Kora.lang('Ui.level_d_d_xp', recipe.level, recipe.xp),
                     tone = recipe.locked and 'destructive' or nil,
                 },
             },
             actions = canSmelt and {
-                { id = 'smelt:' .. recipe.id, label = 'Smelt', icon = 'Flame', variant = 'primary' },
+                { id = 'smelt:' .. recipe.id, label = Kora.lang('Ui.smelt'), icon = 'Flame', variant = 'primary' },
             } or {},
         }
 
@@ -103,7 +103,7 @@ local function buildRecipeCards(recipes)
             columns = 2,
             title = category.label,
             items = recipesByCategory[category.value],
-            empty = ('No %s at this station.'):format(category.label:lower()),
+            empty = Kora.lang('Ui.no_s_at_this_station', category.label:lower()),
         }
     end
 
@@ -126,11 +126,11 @@ local function openSmeltingMenu(stationId, locationIndex)
             navigation = {
                 {
                     id = 'recipes',
-                    label = 'Smelting',
+                    label = Kora.lang('Creator.smelting'),
                     icon = 'Flame',
                     content = {
-                        title = 'Smelting',
-                        description = 'Choose a recipe to smelt.',
+                        title = Kora.lang('Creator.smelting'),
+                        description = Kora.lang('Ui.choose_a_recipe_to_smelt'),
                         blocks = buildRecipeCards(recipes),
                     },
                 },
@@ -165,7 +165,7 @@ local function openSmeltingMenu(stationId, locationIndex)
             if not completed then
                 TriggerServerEvent('kora_mining:smelting:cancel')
                 isSmelting = false
-                Kora.notify.send({ title = 'Smelting', message = 'Smelting cancelled. Your materials were not used.', type = 'info' })
+                Kora.notify.send({ title = Kora.lang('Creator.smelting'), message = Kora.lang('Notify.smelting_cancelled_your_materials_were'), type = 'info' })
                 -- The player chose to stop: do not reopen the menu at them.
                 break
             else
@@ -185,7 +185,7 @@ end
 
 Kora.nui.registerApp({
     id = APP_ID,
-    title = 'Smelting',
+    title = Kora.lang('Creator.smelting'),
     icon = 'Flame',
     layout = 'compact',
     placement = 'right',
@@ -194,9 +194,9 @@ Kora.nui.registerApp({
     navigation = {
         {
             id = 'recipes',
-            label = 'Smelting',
+            label = Kora.lang('Creator.smelting'),
             icon = 'Flame',
-            content = { title = 'Smelting', blocks = {} },
+            content = { title = Kora.lang('Creator.smelting'), blocks = {} },
         },
     },
     onAction = function(action)
@@ -222,7 +222,7 @@ local function buildStation(stationId, station)
         if coords then
             local options = {
                 {
-                    label = station.targetLabel or 'Smelt',
+                    label = station.targetLabel or Kora.lang('Ui.smelt'),
                     icon = station.targetIcon or 'fa-solid fa-fire',
                     onSelect = function()
                         openSmeltingMenu(stationId, locationIndex)
