@@ -165,18 +165,18 @@ function KoraMining.schemaReady()
 
     local ready, readyErr = Kora.sql.ready(60000)
     if not ready then
-        print(('^1[kora_mining] database not ready, mining is disabled: %s^7'):format(tostring(readyErr)))
+        Kora.logging.error('schema.database_not_ready', 'Database not ready, mining is disabled', { error = tostring(readyErr) })
         schemaState.running, schemaState.done = false, true
         return false
     end
 
     local reports, err = Kora.sql.ensureTables(KoraMiningSchema)
     if err then
-        print(('^1[kora_mining] schema setup failed, mining is disabled: %s^7'):format(tostring(err)))
+        Kora.logging.error('schema.setup_failed', 'Schema setup failed, mining is disabled', { error = tostring(err) })
     else
         for _, report in ipairs(reports or {}) do
             for _, warning in ipairs(report.warnings or {}) do
-                print(('^3[kora_mining] schema warning (%s): %s^7'):format(tostring(report.table or report.name), tostring(warning)))
+                Kora.logging.warn('schema.warning', 'Schema warning', { table = tostring(report.table or report.name), warning = tostring(warning) })
             end
         end
         schemaState.ok = true
