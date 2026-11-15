@@ -69,7 +69,7 @@ local function syncBlips(list, fresh)
                 if attempt < RETRY_ATTEMPTS then Wait(RETRY_DELAY_MS) end
             end
             if err and not resync then
-                print(Kora.lang('Error.map_blip_was_not_created', err))
+                Kora.logging.error('blips.create_failed', 'Map blip was not created', { error = tostring(err) })
             end
             fresh = resync
         until not resync
@@ -84,7 +84,7 @@ end)
 CreateThread(function()
     local list = Kora.state.awaitGlobal('koraMiningBlips', 30000, 100)
     if not list then
-        print('[kora_mining] timed out waiting for map blips')
+        Kora.logging.warn('blips.state_timed_out', 'Timed out waiting for map blips')
         return
     end
     syncBlips(list)

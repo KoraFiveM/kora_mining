@@ -87,7 +87,7 @@ CreateThread(function()
         if blip then
             blips[blip.id] = blip
         else
-            print(('^3[kora_mining] skipped blip %s: %s^7'):format(tostring(row.id), tostring(err)))
+            Kora.logging.warn('blips.row_skipped', 'Skipped an invalid blip row', { blipId = tostring(row.id), reason = tostring(err) })
         end
     end
     blipsReady = true

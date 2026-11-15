@@ -255,7 +255,7 @@ end)
 CreateThread(function()
     local data = Kora.state.awaitGlobal('koraMiningSmelting', 30000, 100)
     if not data then
-        print('[kora_mining] timed out waiting for smelting stations')
+        Kora.logging.warn('smelting.state_timed_out', 'Timed out waiting for smelting stations')
         return
     end
 

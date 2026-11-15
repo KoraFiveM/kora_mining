@@ -215,8 +215,7 @@ Kora.callback.register('kora_mining:pickaxeShop:buy', function(source, itemName)
             true
         )
         if not refunded then
-            print(('[kora_mining] pickaxe refund failed for player %s: %s')
-                :format(source, tostring(refundError)))
+            Kora.logging.error('pickaxe_shop.refund_failed', 'Pickaxe refund failed', { playerId = source, error = tostring(refundError) })
         end
 
         return finishPurchase(false, addError or Kora.lang('Error.inventory_full_purchase_refunded'))

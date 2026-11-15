@@ -43,7 +43,7 @@ local function mineRock(name, id)
     if ok and completed then
         TriggerServerEvent('kora_mining:server:mine', name, id, profile.pickaxeId)
     elseif not ok then
-        print(Kora.lang('Ui.kora_mining_mining_progress_failed', tostring(completed)))
+        Kora.logging.error('rocks.progress_failed', 'Mining progress failed', { error = tostring(completed) })
     end
     Busy = false
 end
@@ -106,7 +106,7 @@ local function initType(name)
     local settings = Kora.state.awaitGlobal(name .. 'Data', 30000, 100)
     local spots = Kora.state.awaitGlobal(name, 30000, 100)
     if not settings or not spots then
-        print(Kora.lang('Ui.kora_mining_timed_out_waiting', name))
+        Kora.logging.warn('rocks.state_timed_out', 'Timed out waiting for rock spawn state', { state = name })
         return
     end
     Settings[name], Spots[name] = settings, spots
@@ -127,7 +127,7 @@ end)
 CreateThread(function()
     local types = Kora.state.awaitGlobal('koraMiningRockTypes', 30000, 100)
     if not types then
-        print('[kora_mining] timed out waiting for GlobalState.koraMiningRockTypes')
+        Kora.logging.warn('rocks.types_timed_out', 'Timed out waiting for GlobalState.koraMiningRockTypes')
         return
     end
     for _, name in ipairs(types) do

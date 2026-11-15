@@ -166,7 +166,7 @@ RegisterNetEvent('kora_mining:pickaxeShop:reload', spawnVendors)
 CreateThread(function()
     local shop = Kora.state.awaitGlobal('koraMiningPickaxeShop', 30000, 100)
     if not shop then
-        print('[kora_mining] timed out waiting for pickaxe vendor settings')
+        Kora.logging.warn('pickaxe_shop.state_timed_out', 'Timed out waiting for pickaxe vendor settings')
         return
     end
 
