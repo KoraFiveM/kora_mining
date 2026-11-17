@@ -55,7 +55,7 @@ local function spawnRock(name, id, spot)
     exports.kora_target:addEntity(object, {
         {
             icon = settings.icon or 'fa-solid fa-hammer',
-            label = settings.targetLabel or Kora.lang('Error.mine_rock'),
+            label = settings.targetLabel ~= '' and settings.targetLabel or Kora.lang('Error.mine_rock'),
             onSelect = function() mineRock(name, id) end,
             canInteract = function() return not Busy end,
         }

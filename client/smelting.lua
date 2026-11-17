@@ -7,6 +7,13 @@ local isSmelting = false
 
 local CATEGORIES = MiningConfig.smeltingCategories
 
+-- Default categories are translated (Ui.category_<value>); categories added in shared/config.lua keep their label.
+local function categoryLabel(category)
+    local key = 'Ui.category_' .. category.value
+    local label = Kora.lang(key)
+    return label ~= key and label or category.label
+end
+
 local function notify(message)
     Kora.notify.send({
         title = Kora.lang('Creator.smelting'),
@@ -96,14 +103,15 @@ local function buildRecipeCards(recipes)
     end
 
     for _, category in ipairs(CATEGORIES) do
+        local label = categoryLabel(category)
         blocks[#blocks + 1] = {
             type = 'list',
             id = 'recipes-' .. category.value,
             layout = 'cards',
             columns = 2,
-            title = category.label,
+            title = label,
             items = recipesByCategory[category.value],
-            empty = Kora.lang('Ui.no_s_at_this_station', category.label:lower()),
+            empty = Kora.lang('Ui.no_s_at_this_station', label:lower()),
         }
     end
 
