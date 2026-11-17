@@ -211,9 +211,10 @@ end)
 register('kora_mining:creator:create', function(_, id)
     id = cleanId(id)
     if not id then return fail(Kora.lang('Error.use_a_name_starting_with')) end
+    -- Labels stay blank until an admin types one, so clients show the translated Error.mine_rock / Ui.mining.
     local empty = { category = 'resources', model = '', item = '', maxGive = 2, respawnTime = 60, pickTime = 5000, levelRequired = 1,
-        xpPerMine = 0, maxLevelSpeedBonus = 0, pickaxes = defaultPickaxeSettings(), icon = 'fa-solid fa-hammer', targetLabel = 'Mine rock',
-        progressLabel = 'Mining', disabled = false }
+        xpPerMine = 0, maxLevelSpeedBonus = 0, pickaxes = defaultPickaxeSettings(), icon = 'fa-solid fa-hammer', targetLabel = '',
+        progressLabel = '', disabled = false }
     local ok, err = Kora.sql.update('INSERT INTO `kora_mining_rockspawns` (`id`, `data`, `locations`) VALUES (?, ?, ?)', { id, json.encode(empty), '[]' })
     if not ok then return fail(err or Kora.lang('Error.could_not_create_rockspawn')) end
     reloadRockspawn(id)
@@ -297,7 +298,7 @@ RegisterNetEvent('kora_mining:server:mine', function(rockId, spotId, pickaxeId)
 
     local profile, err = mineProfile(src, rockId, spotId)
     if not profile or profile.pickaxeId ~= pickaxeId then
-        if err then Kora.notify.send(src, { title = 'Mining', message = err, type = 'error' }) end
+        if err then Kora.notify.send(src, { title = Kora.lang('Ui.mining'), message = err, type = 'error' }) end
         return
     end
     if not mine or mine.rockId ~= rockId or mine.spotId ~= spotId or mine.pickaxeId ~= pickaxeId then return end
@@ -349,7 +350,7 @@ CreateThread(function()
 end)
 
 RegisterCommand('miningCreator', function(src)
-    if not isAdmin(src) then Kora.notify.send(src, { title = 'Mining Creator', message = 'Admin permission required.', type = 'error' }); return end
+    if not isAdmin(src) then Kora.notify.send(src, { title = Kora.lang('Creator.mining_creator'), message = Kora.lang('Error.admin_permission_required'), type = 'error' }); return end
     TriggerClientEvent('kora_mining:creator:open', src)
 end, false)
 

@@ -15,6 +15,19 @@ local function isSupportedRockModel(model)
     for _, available in ipairs(ROCK_MODELS) do if model == available then return true end end
     return false
 end
+
+-- Default categories are translated (Ui.category_<value>); categories added in shared/config.lua keep their label.
+local function categoryLabel(category)
+    local key = 'Ui.category_' .. category.value
+    local label = Kora.lang(key)
+    return label ~= key and label or category.label
+end
+
+local function categoryOptions(categories)
+    local options = {}
+    for _, category in ipairs(categories) do options[#options + 1] = { value = category.value, label = categoryLabel(category) } end
+    return options
+end
 local PICKAXES = MiningConfig.pickaxes
 
 local function notify(message, tone)
@@ -74,7 +87,7 @@ local function buildRockSettingsPage()
     local blocks = {
             { type = 'form', id = 'settings', title = Kora.lang('Creator.rockspawn_settings'), fields = {
                 { id = 'category', label = Kora.lang('Creator.category'), type = 'select', required = true,
-                    default = d.category or 'resources', options = ROCK_CATEGORIES },
+                    default = d.category or 'resources', options = categoryOptions(ROCK_CATEGORIES) },
                 { id = 'model', label = Kora.lang('Creator.rock_prop_model'), type = 'select', required = true, default = d.model or '', options = modelOptions,
                     description = Kora.lang('Creator.models_streamed_by_the_props') },
                 { id = 'item', label = Kora.lang('Creator.item_given'), type = 'select', required = true, searchable = true,
@@ -212,12 +225,13 @@ buildCreatorNavigation = function()
             if (rock.data.category or 'resources') == category.value then
                 items[#items + 1] = { id = rock.id, label = rock.id, icon = 'Pickaxe',
                     description = Kora.lang('Creator.d_spots_s_mining_level', rock.count or 0,
-                        rock.data.item or 'configure reward', rock.data.levelRequired or 1),
+                        rock.data.item ~= '' and rock.data.item or Kora.lang('Creator.configure_reward'), rock.data.levelRequired or 1),
                     action = 'select:' .. rock.id }
             end
         end
-        blocks[#blocks + 1] = { type = 'list', id = 'rocks-' .. category.value, title = category.label,
-            items = items, empty = Kora.lang('Creator.no_s_rockspawns_created_yet', category.label:lower()) }
+        local label = categoryLabel(category)
+        blocks[#blocks + 1] = { type = 'list', id = 'rocks-' .. category.value, title = label,
+            items = items, empty = Kora.lang('Creator.no_s_rockspawns_created_yet', label:lower()) }
     end
     blocks[#blocks + 1] = { type = 'form', id = 'create', title = Kora.lang('Creator.create_rockspawn'), fields = {
         { id = 'id', label = Kora.lang('Creator.rockspawn_name'), type = 'text', required = true, description = Kora.lang('Creator.letters_numbers_and_underscores') },
@@ -279,12 +293,13 @@ buildCreatorNavigation = function()
     }
 
     for _, category in ipairs(SMELT_CATEGORIES) do
+        local label = categoryLabel(category)
         recipeBlocks[#recipeBlocks + 1] = {
             type = 'list',
             id = 'smelt-list-' .. category.value,
-            title = Kora.lang('Creator.s_d', category.label, #recipesByCategory[category.value]),
+            title = Kora.lang('Creator.s_d', label, #recipesByCategory[category.value]),
             items = recipesByCategory[category.value],
-            empty = Kora.lang('Creator.no_s_recipes', category.label:lower()),
+            empty = Kora.lang('Creator.no_s_recipes', label:lower()),
         }
     end
 
@@ -407,7 +422,7 @@ buildCreatorNavigation = function()
         for _,category in ipairs(SMELT_CATEGORIES) do
             local enabled=categoriesEnabled[category.value]
             categoryActions[#categoryActions+1]={id='smelt:station:category:'..category.value,
-                label=(enabled and '✓ ' or '+ ')..category.label,icon=enabled and 'Check' or 'Plus',variant=enabled and 'primary' or 'secondary'}
+                label=(enabled and '✓ ' or '+ ')..categoryLabel(category),icon=enabled and 'Check' or 'Plus',variant=enabled and 'primary' or 'secondary'}
         end
         for _,recipe in ipairs(smeltRecipes) do
           if recipe.output and #(recipe.inputs or {})>0 then
@@ -449,7 +464,7 @@ buildCreatorNavigation = function()
     for _,entry in ipairs(smeltRecipes) do if entry.id==smeltEditing then recipe=entry; break end end
     if recipe then
         local details={{id='label',label = Kora.lang('Creator.recipe_name'),type='text',required=true,default=recipe.label},
-            {id='category',label = Kora.lang('Creator.category'),type='select',required=true,default=recipe.category or 'materials',options=SMELT_CATEGORIES},
+            {id='category',label = Kora.lang('Creator.category'),type='select',required=true,default=recipe.category or 'materials',options=categoryOptions(SMELT_CATEGORIES)},
             {id='level',label = Kora.lang('Creator.smelting_level_required'),type='number',min=1,max=99,default=recipe.level or 1},
             {id='xp',label = Kora.lang('Creator.smelting_xp'),type='number',min=0,max=10000,default=recipe.xp or 0},
             {id='duration',label = Kora.lang('Creator.smelting_time_ms'),type='number',min=500,max=300000,default=recipe.duration or 10000}}
@@ -469,7 +484,7 @@ buildCreatorNavigation = function()
             for _,item in ipairs(smeltItemSearch.results) do
                 local already=item.value==recipe.output
                 for _,input in ipairs(recipe.inputs or {}) do if input.item==item.value then already=true end end
-                results[#results+1]={id=item.value,label=item.label,description=item.value,image=item.image,metadata=already and {{label = Kora.lang('Creator.status'),value='Already in this recipe'}} or nil,
+                results[#results+1]={id=item.value,label=item.label,description=item.value,image=item.image,metadata=already and {{label = Kora.lang('Creator.status'),value=Kora.lang('Creator.already_in_this_recipe')}} or nil,
                     actions={{id='smelt:result:set:'..item.value,label = Kora.lang('Creator.set_as_result'),icon='Check',variant='primary'},
                         not already and {id='smelt:result:add:'..item.value,label = Kora.lang('Creator.add_to_recipe'),icon='Plus',variant='primary'} or nil}}
                 if #results>=15 then break end
@@ -552,7 +567,7 @@ local function openMiningCreator()
             elseif action == 'smelt:output:amount' then
                 local recipe; for _,entry in ipairs(smeltRecipes) do if entry.id==smeltEditing then recipe=entry end end
                 if not recipe or not recipe.output then return fail(Kora.lang('Error.choose_result_item_first')) end
-                local picked=promptForItemAmount(recipe.output,'Edit result amount',recipe.amount or 1)
+                local picked=promptForItemAmount(recipe.output,Kora.lang('Creator.edit_result_amount'),recipe.amount or 1)
                 if not picked then return refresh() end
                 local result,err=Kora.callback.trigger('kora_mining:smelting:creator:recipeOutput',smeltEditing,recipe.output,picked.amount)
                 if not result then return fail(err) end
@@ -563,7 +578,7 @@ local function openMiningCreator()
                 if recipe and recipe.output==itemName then amount=recipe.amount or 1 end
                 local option; for _,entry in ipairs(smeltItems) do if entry.value==itemName then option=entry end end
                 if not option then return fail(Kora.lang('Error.search_for_item_again_first')) end
-                local picked=promptForItemAmount(option.label,'Set recipe result amount',amount)
+                local picked=promptForItemAmount(option.label,Kora.lang('Creator.set_recipe_result_amount'),amount)
                 if not picked then return refresh() end
                 local result,err=Kora.callback.trigger('kora_mining:smelting:creator:recipeOutput',smeltEditing,itemName,picked.amount)
                 if not result then return fail(err) end
@@ -576,7 +591,7 @@ local function openMiningCreator()
                 for _,entry in ipairs(recipe.inputs or {}) do if entry.item==itemName then return fail(Kora.lang('Error.item_already_required')) end end
                 local option; for _,entry in ipairs(smeltItems) do if entry.value==itemName then option=entry end end
                 if not option then return fail(Kora.lang('Error.search_for_item_again_first')) end
-                local picked=promptForItemAmount(option.label,'Add required item')
+                local picked=promptForItemAmount(option.label,Kora.lang('Creator.add_required_item'))
                 if not picked then return refresh() end
                 local inputs={table.unpack(recipe.inputs or {})}; inputs[#inputs+1]={item=itemName,amount=picked.amount}
                 local result,err=Kora.callback.trigger('kora_mining:smelting:creator:recipeInputs',smeltEditing,inputs)
@@ -589,7 +604,7 @@ local function openMiningCreator()
                 local input; for _,entry in ipairs(recipe and recipe.inputs or {}) do if entry.item==itemName then input=entry end end
                 if not input then return refresh() end
                 local option; for _,entry in ipairs(smeltItems) do if entry.value==itemName then option=entry end end
-                local picked=promptForItemAmount(option and option.label or itemName,'Edit required amount',input.amount)
+                local picked=promptForItemAmount(option and option.label or itemName,Kora.lang('Creator.edit_required_amount'),input.amount)
                 if not picked then return refresh() end
                 local inputs={}; for _,entry in ipairs(recipe.inputs) do inputs[#inputs+1]={item=entry.item,amount=entry.item==itemName and picked.amount or entry.amount} end
                 local result,err=Kora.callback.trigger('kora_mining:smelting:creator:recipeInputs',smeltEditing,inputs)
@@ -631,7 +646,9 @@ local function openMiningCreator()
                 local result,err=Kora.callback.trigger('kora_mining:smelting:creator:stationCategories',station.id,categories)
                 if not result then return fail(err) end
                 smeltRecipes,smeltStations=result.recipes or {},result.stations or {}
-                return refresh(notify(Kora.lang(enabled and 'Error.disabled_category' or 'Error.enabled_category', category)))
+                local categoryName=category
+                for _,entry in ipairs(SMELT_CATEGORIES) do if entry.value==category then categoryName=categoryLabel(entry):lower() end end
+                return refresh(notify(Kora.lang(enabled and 'Error.disabled_category' or 'Error.enabled_category', categoryName)))
             elseif action:match('^smelt:station:add:') or action:match('^smelt:station:remove:') then
                 local add=action:match('^smelt:station:add:')~=nil
                 local recipeId=action:match('^smelt:station:add:(.+)$') or action:match('^smelt:station:remove:(.+)$')

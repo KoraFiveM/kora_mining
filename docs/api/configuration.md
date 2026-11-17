@@ -22,7 +22,7 @@ Namespace: `MiningConfig` · Source: `shared/config.lua`
 | `MiningConfig.blip` |  | Legacy table for a static mine-entrance blip: `enabled`, `name`, `coords` (vec3), `sprite`, `color`, `scale`, `shortRange`, `category`, `description`. It is not read anywhere in the code, so editing it or setting `enabled = false` has no effect; blips come from the `kora_mining_blips` table (see [Map blips](../blips.md)). |
 | `MiningConfig.pickaxes` |  | The five fixed pickaxe tiers: `{ id, name, item, level, price }` for `pick1`..`pick5` (Bronze/Iron/Steel/Titanium/Obsidian). `level` is read from this file at runtime (changes need a restart); `price` is the default cash price, overridden by prices stored in the database and changed through the pickaxe-shop creator. |
 
-Category lists: unknown smelting categories on a stored recipe fall back to `materials`, and the server rejects any rock category other than the three above on save.
+Category lists: unknown smelting categories on a stored recipe fall back to `materials`, and the server rejects any rock category other than the three above on save. The default categories are displayed with their translated names from the locale files (`Ui.category_<value>`, for example `Ui.category_bars`), so rename those in the locale files; a category you add yourself shows its `label` as written.
 
 ### Default pickaxes
 

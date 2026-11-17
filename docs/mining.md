@@ -23,7 +23,7 @@ Settings fields (validated by the server on save):
 | `xpPerMine` | Whole number 0 to 10000, awarded once per completed mine |
 | `maxLevelSpeedBonus` | Whole number 0 to 99 (percent speed bonus at Mining level 99) |
 | `pickaxes` | Per pickaxe id: `enabled` and `speedBonus` (0 to 99) |
-| `icon`, `targetLabel`, `progressLabel` | Target icon and labels, up to 64 chars |
+| `icon`, `targetLabel`, `progressLabel` | Target icon and labels, up to 64 chars. New rocks start with blank labels; a blank label shows the translated default (`Error.mine_rock`, `Ui.mining`) in each player's language |
 | `locations` | Up to 200 spots with `coords` `x`, `y`, `z` |
 
 ## Mining flow
