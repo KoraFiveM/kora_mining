@@ -60,8 +60,8 @@ MiningConfig = {
             enabled = true,
             model = 'prop_tool_pickaxe',
             bone = 57005, -- right hand
-            offset = vec3(0.08, -0.1, -0.04),
-            rotation = vec3(78.0, -20.0, 175.0),
+            offset = vec3(0.09, -0.03, -0.02),
+            rotation = vec3(-55.23, 0.0, 0.0),
             rotationOrder = 1,
         },
         dust = {
@@ -69,7 +69,7 @@ MiningConfig = {
             dict = 'core',
             name = 'ent_dst_rocks',
             scale = 0.5,
-            impact = 0.55,
+            impact = 0.37,
             offset = vec3(0.0, 0.95, -0.95),
         },
     },

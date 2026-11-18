@@ -6,28 +6,8 @@ local Busy = false
 
 local MINING = MiningConfig.mining
 local ANIM, PROP, DUST = MINING.anim, MINING.prop, MINING.dust
-local heldPickaxe = nil
 
-local function waitFor(check, timeout)
-    local deadline = GetGameTimer() + (timeout or 3000)
-    while not check() do
-        if GetGameTimer() > deadline then return false end
-        Wait(0)
-    end
-    return true
-end
-
-local function loadAnimDict(dict)
-    if HasAnimDictLoaded(dict) then return true end
-    RequestAnimDict(dict)
-    return waitFor(function() return HasAnimDictLoaded(dict) end, 3000)
-end
-
-local function loadPtfx(dict)
-    if HasNamedPtfxAssetLoaded(dict) then return true end
-    RequestNamedPtfxAsset(dict)
-    return waitFor(function() return HasNamedPtfxAssetLoaded(dict) end, 3000)
-end
+local ASSET_TIMEOUT = { timeout = 3000 }
 
 local function faceRock(ped, rockCoords)
     local pos = GetEntityCoords(ped)
@@ -43,52 +23,19 @@ local function faceRock(ped, rockCoords)
     SetEntityHeading(ped, heading)
 end
 
-local function destroyPickaxe()
-    local pickaxe = heldPickaxe
-    heldPickaxe = nil
-    if pickaxe and DoesEntityExist(pickaxe) then
-        DetachEntity(pickaxe, true, true)
-        DeleteEntity(pickaxe)
-    end
-end
-
-local function attachPickaxe(ped)
-    destroyPickaxe()
-    local model = joaat(PROP.model)
-    if not IsModelInCdimage(model) then
-        Kora.logging.warn('rocks.prop_missing', 'Pickaxe prop model not found', { model = PROP.model })
-        return nil
-    end
-    RequestModel(model)
-    if not waitFor(function() return HasModelLoaded(model) end, 3000) then
-        Kora.logging.warn('rocks.prop_timeout', 'Pickaxe prop model failed to load', { model = PROP.model })
-        return nil
-    end
-
-    local pos = GetEntityCoords(ped)
-    local pickaxe = CreateObject(model, pos.x, pos.y, pos.z + 0.2, true, true, false)
-    SetModelAsNoLongerNeeded(model)
-    if not pickaxe or pickaxe == 0 then return nil end
-
-    local o, r = PROP.offset, PROP.rotation
-    AttachEntityToEntity(
-        pickaxe, ped, GetPedBoneIndex(ped, PROP.bone),
-        o.x, o.y, o.z, r.x, r.y, r.z,
-        true, true, false, true, PROP.rotationOrder or 1, true
-    )
-    DisableCamCollisionForEntity(pickaxe)
-    DisableCamCollisionForObject(pickaxe)
-    heldPickaxe = pickaxe
-    return pickaxe
-end
-
 local function startDust(ped)
     local state = { running = true }
-    if not DUST.enabled or not loadPtfx(DUST.dict) then return state end
-    local swing = math.max(300, math.floor(GetAnimDuration(ANIM.dict, ANIM.clip) * 1000))
-    local beforeImpact = math.floor(swing * Kora.util.clamp(DUST.impact, 0, 1))
+    if not DUST.enabled then return state end
+    local loadOk, loadedPtfx = pcall(Kora.stream.loadPtfx, DUST.dict, nil, ASSET_TIMEOUT)
+    if not loadOk or not loadedPtfx then return state end
     local o = DUST.offset
     CreateThread(function()
+        local deadline = GetGameTimer() + 3000
+        while state.running and not HasAnimDictLoaded(ANIM.dict) and GetGameTimer() < deadline do
+            Wait(0)
+        end
+        local swing = math.max(300, math.floor(GetAnimDuration(ANIM.dict, ANIM.clip) * 1000))
+        local beforeImpact = math.floor(swing * Kora.util.clamp(DUST.impact, 0, 1))
         Wait(beforeImpact)
         while state.running do
             local at = GetOffsetFromEntityInWorldCoords(ped, o.x, o.y, o.z)
@@ -135,17 +82,12 @@ local function mineRock(name, id)
     local duration = tonumber(pickingData.time or settings.pickTime) or 5000
     duration = math.max(500, math.floor(duration * (1 - totalSpeedBonus / 100)))
 
-    local ped = PlayerPedId()
+    local ped = Kora.cache.ped()
     local dust
     local ok, completed = pcall(function()
         local rockCoords = rockCoordsFor(name, id)
         if MINING.faceRock and rockCoords then faceRock(ped, rockCoords) end
 
-        local animLoaded = loadAnimDict(ANIM.dict)
-        if not animLoaded then
-            Kora.logging.warn('rocks.anim_timeout', 'Mining animation failed to load', { dict = ANIM.dict })
-        end
-        if PROP.enabled then attachPickaxe(ped) end
         dust = startDust(ped)
 
         return Kora.progressbar.start({
@@ -154,15 +96,21 @@ local function mineRock(name, id)
             useWhileDead = false,
             canCancel = true,
             disable = pickingData.disable or { move = true, combat = true, vehicle = true },
-            anim = animLoaded and {
-                dict = ANIM.dict, clip = ANIM.clip, flag = ANIM.flag, blendIn = 3.0, blendOut = 3.0,
+            anim = { dict = ANIM.dict, clip = ANIM.clip, flag = ANIM.flag, blendIn = 3.0, blendOut = 3.0 },
+            props = PROP.enabled and {
+                {
+                    model = PROP.model,
+                    bone = PROP.bone,
+                    offset = PROP.offset,
+                    rotation = PROP.rotation,
+                    collision = false,
+                    rotationOrder = PROP.rotationOrder or 0,
+                },
             } or nil,
         })
     end)
 
     if dust then dust.running = false end
-    destroyPickaxe()
-    StopAnimTask(ped, ANIM.dict, ANIM.clip, 1.0)
 
     if ok and completed then
         TriggerServerEvent('kora_mining:server:mine', name, id, profile.pickaxeId)
@@ -261,6 +209,5 @@ end)
 
 AddEventHandler('onResourceStop', function(resource)
     if resource ~= GetCurrentResourceName() then return end
-    destroyPickaxe()
     for name in pairs(Objects) do clearType(name) end
 end)
