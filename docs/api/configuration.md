@@ -20,6 +20,7 @@ Namespace: `MiningConfig` · Source: `shared/config.lua`
 | `MiningConfig.rockCategories` |  | UI categories for rocks: `resources`, `gemstones`, `crystals` (`{ value, label }`). Used both client-side for display and server-side (`isRockCategory`) to validate saved rock data. |
 | `MiningConfig.smeltingCategories` |  | UI categories for smelting recipes: `bars`, `materials`, `jewellery`, `pickaxes`, `gemstones`. |
 | `MiningConfig.blip` |  | Legacy table for a static mine-entrance blip: `enabled`, `name`, `coords` (vec3), `sprite`, `color`, `scale`, `shortRange`, `category`, `description`. It is not read anywhere in the code, so editing it or setting `enabled = false` has no effect; blips come from the `kora_mining_blips` table (see [Map blips](../blips.md)). |
+| `MiningConfig.mining` |  | Client-side mining presentation. `faceRock` turns the player toward the rock first. `anim` is the mining clip (`dict`, `clip`, `flag`); the default is the ground-impact pickaxe swing `melee@large_wpn@streamed_core` / `ground_attack_on_spot` with looping flag 1. `prop` is the pickaxe held in the right hand (`enabled`, `model`, `bone`, `offset`, `rotation`, `rotationOrder`); adjust `offset` and `rotation` if it sits wrong in the hand. `dust` is one rock-dust puff per swing (`enabled`, `dict`, `name`, `scale`, `impact`, `offset`): the swing length is read from the clip, `impact` is the fraction of the swing where the pickaxe hits the ground, and `offset` is relative to the player (in front, at ground level). Changes need a resource restart. |
 | `MiningConfig.pickaxes` |  | The five fixed pickaxe tiers: `{ id, name, item, level, price }` for `pick1`..`pick5` (Bronze/Iron/Steel/Titanium/Obsidian). `level` is read from this file at runtime (changes need a restart); `price` is the default cash price, overridden by prices stored in the database and changed through the pickaxe-shop creator. |
 
 Category lists: unknown smelting categories on a stored recipe fall back to `materials`, and the server rejects any rock category other than the three above on save. The default categories are displayed with their translated names from the locale files (`Ui.category_<value>`, for example `Ui.category_bars`), so rename those in the locale files; a category you add yourself shows its `label` as written.
@@ -43,6 +44,6 @@ Changing the pickaxe `item` or `level` takes effect on restart. Prices stored in
 | Rock interaction distance 3.0, vendor 5.0, smelting station 4.0 | server | Checked with `Kora.distance` |
 | Slack 1 second or 10 percent of the duration (whichever is smaller) | server | Allowed early completion for mining and smelting |
 | Default vendor ped model `s_m_m_dockwork_01` | `server/pickaxe_shop.lua` | Changeable in the creator |
-| Mining animation `amb@world_human_hammering@male@base` / `base`, smelting animation `mp_arresting` / `a_uncuff` | client | Not configurable |
+| Smelting animation `mp_arresting` / `a_uncuff` | client | Not configurable. The mining animation, held pickaxe and dust are set in `MiningConfig.mining` |
 
 Rocks, the vendor, blips, recipes and stations are database data edited in the [Mining Creator](../creator.md).

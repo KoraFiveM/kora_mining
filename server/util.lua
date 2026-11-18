@@ -26,16 +26,15 @@ function MiningUtil.getSharedItems()
     return ok and type(items) == 'table' and items or {}
 end
 
----Whether `x`, `y`, `z` are all finite and within a sane in-world range.
+---Whether `x`, `y`, `z` are finite and within a sane in-world range.
 function MiningUtil.isWorldCoord(x, y, z)
-    return x ~= nil and y ~= nil and z ~= nil
+    return Kora.util.isFiniteNumber(x) and Kora.util.isFiniteNumber(y) and Kora.util.isFiniteNumber(z)
         and math.abs(x) <= 10000 and math.abs(y) <= 10000 and math.abs(z) <= 10000
 end
 
----Whether `value` is present and within `[min, max]`, optionally requiring a
----whole number. `value` is expected to already be `tonumber`'d by the caller.
+---Whether `value` is finite and within `[min, max]`, optionally requiring a whole number.
 function MiningUtil.inRange(value, min, max, wholeNumber)
-    if not value then return false end
-    if wholeNumber and value % 1 ~= 0 then return false end
+    if not Kora.util.isFiniteNumber(value) then return false end
+    if wholeNumber and not Kora.util.isInteger(value) then return false end
     return value >= min and value <= max
 end

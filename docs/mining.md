@@ -30,7 +30,7 @@ Settings fields (validated by the server on save):
 
 1. The player selects the target option. The client calls the callback `kora_mining:mineProfile`.
 2. The server checks that the spot exists and is not taken, that the player is within 3.0 of it, that the player's Mining level (`kora_skills:getRep(src, 'mining').level`) meets `levelRequired`, and that the player owns an enabled pickaxe they are high enough level to use. The server picks the highest tier pickaxe that qualifies. It returns the profile and starts a server timer for that spot.
-3. The client runs a progress bar for the computed duration. It can be cancelled and cannot be used while moving, fighting or in a vehicle.
+3. The client turns the player toward the rock, attaches a pickaxe prop to the right hand, and runs a progress bar with the ground-impact pickaxe swing and a puff of rock dust on each swing for the computed duration. It can be cancelled and cannot be used while moving, fighting or in a vehicle. The pickaxe prop is removed when the bar finishes, is cancelled, fails, or the resource stops. The animation, prop offsets and dust are set in `MiningConfig.mining` (see the [configuration reference](api/configuration.md)).
 4. On completion the client triggers `kora_mining:server:mine`. The server repeats the checks, requires that the timer started in step 2 has run for the full duration (minus slack), marks the spot taken, tells all clients to remove the prop, gives the item and awards XP.
 5. After `respawnTime` seconds the spot is released and clients respawn the prop.
 
