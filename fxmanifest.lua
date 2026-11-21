@@ -7,6 +7,7 @@ files {
 
 name 'kora_mining'
 author 'Kora'
+version '0.2.2'
 description 'Mining rock spawn creator and configuration'
 
 dependency 'kora_lib'
