@@ -10,6 +10,7 @@
       "client/smelting.lua"
     ],
     "server": [
+      "kora_versioncheck.lua",
       "server/blips.lua",
       "server/main.lua",
       "server/pickaxe_shop.lua",
